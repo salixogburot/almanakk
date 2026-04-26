@@ -1,0 +1,139 @@
+{
+  "01-01": [
+    {"navn": "J.D. Salinger", "info": "forfatter, f. 1919"},
+    {"navn": "Xavier Dolan", "info": "filmregissør, f. 1989"}
+  ],
+  "01-08": [
+    {"navn": "David Bowie", "info": "musiker, f. 1947"},
+    {"navn": "Stephen Hawking", "info": "fysiker, f. 1942"}
+  ],
+  "01-15": [
+    {"navn": "Martin Luther King Jr.", "info": "aktivist, f. 1929"}
+  ],
+  "01-17": [
+    {"navn": "Muhammad Ali", "info": "bokser, f. 1942"}
+  ],
+  "01-25": [
+    {"navn": "Virginia Woolf", "info": "forfatter, f. 1882"}
+  ],
+  "02-06": [
+    {"navn": "Bob Marley", "info": "musiker, f. 1945"}
+  ],
+  "02-11": [
+    {"navn": "Thomas Edison", "info": "oppfinner, f. 1847"}
+  ],
+  "02-14": [
+    {"navn": "Galileo Galilei", "info": "vitenskapsmann, f. 1564"}
+  ],
+  "02-19": [
+    {"navn": "Nicolaus Copernicus", "info": "astronom, f. 1473"}
+  ],
+  "03-04": [
+    {"navn": "Miriam Makeba", "info": "sanger, f. 1932"}
+  ],
+  "03-14": [
+    {"navn": "Fride", "info": "🎂", "privat": true},
+    {"navn": "Albert Einstein", "info": "fysiker, f. 1879"},
+    {"navn": "Pi-dagen", "info": "3.14159..."}
+  ],
+  "03-16": [
+    {"navn": "Jerry Lewis", "info": "komiker, f. 1926"}
+  ],
+  "03-25": [
+    {"navn": "Elton John", "info": "musiker, f. 1947"}
+  ],
+  "04-01": [
+    {"navn": "Marvin Gaye", "info": "musiker, f. 1939"}
+  ],
+  "04-04": [
+    {"navn": "Maya Angelou", "info": "forfatter, f. 1928"}
+  ],
+  "04-15": [
+    {"navn": "Leonardo da Vinci", "info": "kunstner og oppfinner, f. 1452"}
+  ],
+  "04-23": [
+    {"navn": "William Shakespeare", "info": "dramatiker, f. 1564"}
+  ],
+  "05-01": [
+    {"navn": "Tim McGraw", "info": "musiker, f. 1967"}
+  ],
+  "05-05": [
+    {"navn": "Adele", "info": "sanger, f. 1988"}
+  ],
+  "05-09": [
+    {"navn": "Billy Joel", "info": "musiker, f. 1949"}
+  ],
+  "05-25": [
+    {"navn": "Miles Davis", "info": "jazzmusiker, f. 1926"}
+  ],
+  "06-01": [
+    {"navn": "Marilyn Monroe", "info": "skuespiller, f. 1926"}
+  ],
+  "06-12": [
+    {"navn": "Anne Frank", "info": "dagbokforfatter, f. 1929"}
+  ],
+  "06-22": [
+    {"navn": "Meryl Streep", "info": "skuespiller, f. 1949"}
+  ],
+  "07-04": [
+    {"navn": "Nathaniel Hawthorne", "info": "forfatter, f. 1804"}
+  ],
+  "07-26": [
+    {"navn": "Mick Jagger", "info": "musiker, f. 1943"}
+  ],
+  "07-30": [
+    {"navn": "Henry Ford", "info": "industripioner, f. 1863"}
+  ],
+  "08-04": [
+    {"navn": "Barack Obama", "info": "president, f. 1961"}
+  ],
+  "08-12": [
+    {"navn": "George Soros", "info": "investor, f. 1930"}
+  ],
+  "08-26": [
+    {"navn": "Mother Teresa", "info": "humanitær, f. 1910"}
+  ],
+  "09-05": [
+    {"navn": "Freddie Mercury", "info": "musiker, f. 1946"}
+  ],
+  "09-26": [
+    {"navn": "T.S. Eliot", "info": "dikter, f. 1888"}
+  ],
+  "10-02": [
+    {"navn": "Mahatma Gandhi", "info": "fredsaktivist, f. 1869"}
+  ],
+  "10-09": [
+    {"navn": "John Lennon", "info": "musiker, f. 1940"}
+  ],
+  "10-14": [
+    {"navn": "Usain Bolt", "info": "sprinter, f. 1986"}
+  ],
+  "10-28": [
+    {"navn": "Bill Gates", "info": "teknologipioner, f. 1955"}
+  ],
+  "11-08": [
+    {"navn": "Alain Delon", "info": "skuespiller, f. 1935"}
+  ],
+  "11-09": [
+    {"navn": "Carl Sagan", "info": "astronom, f. 1934"}
+  ],
+  "11-19": [
+    {"navn": "Jodie Foster", "info": "skuespiller, f. 1962"}
+  ],
+  "11-30": [
+    {"navn": "Mark Twain", "info": "forfatter, f. 1835"},
+    {"navn": "Winston Churchill", "info": "statsmann, f. 1874"}
+  ],
+  "12-05": [
+    {"navn": "Walt Disney", "info": "animator og filmpioner, f. 1901"}
+  ],
+  "12-16": [
+    {"navn": "Ludwig van Beethoven", "info": "komponist, f. 1770"}
+  ],
+  "12-17": [
+    {"navn": "Pope Francis", "info": "pave, f. 1936"}
+  ],
+  "12-26": [
+    {"navn": "Mao Zedong", "info": "politiker, f. 1893"}
+  ]
+}

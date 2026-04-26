@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=800">
+<title>Oslo Almanakk</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Courier+Prime:wght@400;700&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0;}
+
+body {
+  background: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+#screen {
+  width: 800px;
+  height: 480px;
+  background: #f2ede4;
+  color: #111;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Libre Baskerville', serif;
+}
+
+/* ── LAYOUT GRID ── */
+.col-left   { position:absolute; left:0;    top:0; width:210px; height:480px; border-right:1.5px solid #111; }
+.col-center { position:absolute; left:210px;top:0; width:340px; height:480px; border-right:1.5px solid #111; }
+.col-right  { position:absolute; left:550px;top:0; width:250px; height:480px; }
+
+/* ── LEFT COLUMN ── */
+.date-block {
+  padding: 16px 16px 12px;
+  border-bottom: 1.5px solid #111;
+}
+.date-dayname {
+  font-family: 'Courier Prime', monospace;
+  font-size: 9px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 2px;
+}
+.date-num {
+  font-family: 'UnifrakturMaguntia', cursive;
+  font-size: 88px;
+  line-height: 0.9;
+  color: #111;
+}
+.date-monthyear {
+  font-family: 'Courier Prime', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #c0392b;
+  margin-top: 4px;
+}
+
+.nameday-block {
+  padding: 10px 16px;
+  border-bottom: 1px solid #ccc;
+}
+.block-label {
+  font-family: 'Courier Prime', monospace;
+  font-size: 8px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #999;
+  margin-bottom: 4px;
+}
+.nameday-names {
+  font-size: 13px;
+  font-style: italic;
+  color: #111;
+  line-height: 1.4;
+}
+
+.sol-block {
+  padding: 10px 16px;
+  border-bottom: 1px solid #ccc;
+}
+.sol-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 0;
+}
+.sol-label {
+  font-family: 'Courier Prime', monospace;
+  font-size: 9px;
+  color: #888;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.sol-time {
+  font-family: 'Courier Prime', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111;
+}
+.sol-dagslys {
+  font-family: 'Courier Prime', monospace;
+  font-size: 9px;
+  color: #888;
+  margin-top: 5px;
+  line-height: 1.5;
+}
+.sol-diff-pos { color: #c0392b; }
+.sol-diff-neg { color: #555; }
+
+.bday-block {
+  padding: 10px 16px;
+}
+.bday-item {
+  padding: 4px 0;
+  border-bottom: 0.5px solid #ddd;
+}
+.bday-item:last-child { border-bottom: none; }
+.bday-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #111;
+}
+.bday-name.privat { color: #c0392b; }
+.bday-info {
+  font-family: 'Courier Prime', monospace;
+  font-size: 9px;
+  color: #888;
+  margin-top: 1px;
+}
+
+/* ── CENTER COLUMN ── */
+.masthead {
+  padding: 14px 20px 10px;
+  border-bottom: 2px solid #111;
+  text-align: center;
+  position: relative;
+}
+.masthead-title {
+  font-family: 'UnifrakturMaguntia', cursive;
+  font-size: 32px;
+  line-height: 1;
+  color: #111;
+  letter-spacing: 1px;
+}
+.masthead-sub {
+  font-family: 'Courier Prime', monospace;
+  font-size: 8px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #999;
+  margin-top: 2px;
+}
+.masthead-ornament {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.masthead-ornament.left { left: 12px; }
+.masthead-ornament.right { right: 12px; }
+
+.wx-block {
+  padding: 12px 20px;
+  border-bottom: 1.5px solid #111;
+}
+.wx-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+.wx-temp {
+  font-family: 'UnifrakturMaguntia', cursive;
+  font-size: 62px;
+  line-height: 1;
+  color: #111;
+}
+.wx-details {
+  flex: 1;
+}
+.wx-desc {
+  font-size: 12px;
+  font-style: italic;
+  color: #444;
+  margin-bottom: 3px;
+}
+.wx-meta {
+  font-family: 'Courier Prime', monospace;
+  font-size: 9px;
+  color: #888;
+  line-height: 1.7;
+}
+.wx-svg { flex-shrink: 0; }
+
+.forecast-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+.fc-cell {
+  text-align: center;
+  border: 0.5px solid #ccc;
+  padding: 5px 3px;
+  background: #ede8df;
+}
+.fc-day {
+  font-family: 'Courier Prime', monospace;
+  font-size: 8px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #888;
+}
+.fc-icon { margin: 3px auto; display: block; }
+.fc-hi {
+  font-size: 12px;
+  font-weight: 700;
+  color: #111;
+}
+.fc-lo {
+  font-family: 'Courier Prime', monospace;
+  font-size: 9px;
+  color: #888;
+}
+
+.countdown-block {
+  padding: 12px 20px;
+  border-bottom: 1px solid #ccc;
+}
+.cd-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 4px 0;
+  border-bottom: 0.5px solid #e0dbd2;
+}
+.cd-row:last-child { border-bottom: none; }
+.cd-label {
+  font-family: 'Courier Prime', monospace;
+  font-size: 10px;
+  color: #666;
+  letter-spacing: 0.5px;
+}
+.cd-val {
+  font-size: 18px;
+  font-weight: 700;
+  color: #c0392b;
+}
+.cd-unit {
+  font-family: 'Courier Prime', monospace;
+  font-size: 9px;
+  color: #999;
+  margin-left: 3px;
+}
+
+.yearbar-block {
+  padding: 10px 20px;
+}
+.yb-label {
+  font-family: 'Courier Prime', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #aaa;
+  margin-bottom: 5px;
+  display: flex;
+  justify-content: space-between;
+}
+.yb-outer {
+  height: 5px;
+  background: #ddd;
+  border: 0.5px solid #bbb;
+}
+.yb-inner {
+  height: 100%;
+  background: #111;
+}
+
+/* ── RIGHT COLUMN ── */
+.right-top {
+  padding: 14px 16px 10px;
+  border-bottom: 1.5px solid #111;
+}
+.right-date-label {
+  font-family: 'UnifrakturMaguntia', cursive;
+  font-size: 18px;
+  color: #111;
+  margin-bottom: 6px;
+}
+
+.moon-block {
+  padding: 10px 16px;
+  border-bottom: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.moon-svg { flex-shrink: 0; }
+.moon-info {
+  font-family: 'Courier Prime', monospace;
+  font-size: 10px;
+  color: #666;
+  line-height: 1.6;
+}
+.moon-phase-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #111;
+  font-family: 'Libre Baskerville', serif;
+}
+
+.week-block {
+  padding: 10px 16px;
+}
+.week-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+  border-bottom: 0.5px solid #e0dbd2;
+  font-family: 'Courier Prime', monospace;
+  font-size: 10px;
+}
+.week-row:last-child { border-bottom: none; }
+.week-row.today {
+  color: #c0392b;
+  font-weight: 700;
+}
+.week-dayname { color: #888; width: 30px; }
+.week-row.today .week-dayname { color: #c0392b; }
+.week-date { color: #111; }
+
+.footer-strip {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 22px;
+  border-top: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: #ede8df;
+}
+.footer-txt {
+  font-family: 'Courier Prime', monospace;
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: #aaa;
+  text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+<div id="screen">
+
+  <!-- ══ LEFT COLUMN ══ -->
+  <div class="col-left">
+
+    <div class="date-block">
+      <div class="date-dayname" id="l-dayname">mandag</div>
+      <div class="date-num" id="l-daynum">26</div>
+      <div class="date-monthyear" id="l-monthyear">april · 2026</div>
+    </div>
+
+    <div class="nameday-block">
+      <div class="block-label">Navnedag</div>
+      <div class="nameday-names" id="l-nameday">Klara, Klarissa</div>
+    </div>
+
+    <div class="sol-block">
+      <div class="block-label">Sol – Oslo</div>
+      <div class="sol-row">
+        <span class="sol-label">
+          <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="2.5" fill="#111"/><line x1="5" y1="0" x2="5" y2="1.5" stroke="#111" stroke-width="1"/><line x1="5" y1="8.5" x2="5" y2="10" stroke="#111" stroke-width="1"/><line x1="0" y1="5" x2="1.5" y2="5" stroke="#111" stroke-width="1"/><line x1="8.5" y1="5" x2="10" y2="5" stroke="#111" stroke-width="1"/></svg>
+          Oppgang
+        </span>
+        <span class="sol-time" id="l-sunrise">05:38</span>
+      </div>
+      <div class="sol-row">
+        <span class="sol-label">
+          <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="2.5" fill="none" stroke="#111" stroke-width="1"/><line x1="5" y1="0" x2="5" y2="1.5" stroke="#111" stroke-width="1"/><line x1="5" y1="8.5" x2="5" y2="10" stroke="#111" stroke-width="1"/><line x1="0" y1="5" x2="1.5" y2="5" stroke="#111" stroke-width="1"/><line x1="8.5" y1="5" x2="10" y2="5" stroke="#111" stroke-width="1"/></svg>
+          Nedgang
+        </span>
+        <span class="sol-time" id="l-sunset">21:12</span>
+      </div>
+      <div class="sol-dagslys" id="l-dagslys">
+        Dagslys: <strong>15t 34m</strong><br>
+        <span id="l-soldiff" class="sol-diff-pos">+3m 42s mer enn i går</span>
+      </div>
+    </div>
+
+    <div class="bday-block">
+      <div class="block-label">Bursdag i dag</div>
+      <div id="l-birthdays"><div class="bday-info" style="font-style:italic">Ingen i dag</div></div>
+    </div>
+
+  </div>
+
+  <!-- ══ CENTER COLUMN ══ -->
+  <div class="col-center">
+
+    <div class="masthead">
+      <svg class="masthead-ornament left" width="24" height="40" viewBox="0 0 24 40">
+        <path d="M12 2 C6 8, 4 14, 12 20 C20 26, 18 32, 12 38" stroke="#ccc" stroke-width="1" fill="none"/>
+        <circle cx="12" cy="2" r="2" fill="#ccc"/>
+        <circle cx="12" cy="38" r="2" fill="#ccc"/>
+      </svg>
+      <div class="masthead-title">Oslo Almanakk</div>
+      <div class="masthead-sub" id="c-datestr">søndag 26. april 2026</div>
+      <svg class="masthead-ornament right" width="24" height="40" viewBox="0 0 24 40">
+        <path d="M12 2 C18 8, 20 14, 12 20 C4 26, 6 32, 12 38" stroke="#ccc" stroke-width="1" fill="none"/>
+        <circle cx="12" cy="2" r="2" fill="#ccc"/>
+        <circle cx="12" cy="38" r="2" fill="#ccc"/>
+      </svg>
+    </div>
+
+    <div class="wx-block">
+      <div class="wx-main">
+        <svg class="wx-svg" id="c-wxsvg" width="52" height="52" viewBox="0 0 52 52"></svg>
+        <div class="wx-temp" id="c-wxtemp">--°</div>
+        <div class="wx-details">
+          <div class="wx-desc" id="c-wxdesc">Laster vær...</div>
+          <div class="wx-meta" id="c-wxmeta"></div>
+        </div>
+      </div>
+      <div class="forecast-row" id="c-forecast"></div>
+    </div>
+
+    <div class="countdown-block">
+      <div class="cd-row">
+        <span class="cd-label">🎂 Fride</span>
+        <span><span class="cd-val" id="c-cd-fride">--</span><span class="cd-unit">dager</span></span>
+      </div>
+      <div class="cd-row">
+        <span class="cd-label">🎄 Julaften</span>
+        <span><span class="cd-val" id="c-cd-jul">--</span><span class="cd-unit">dager</span></span>
+      </div>
+    </div>
+
+    <div class="yearbar-block">
+      <div class="yb-label">
+        <span>Året er omme</span>
+        <span id="c-yrpct">--</span>
+      </div>
+      <div class="yb-outer"><div class="yb-inner" id="c-yrbar" style="width:0%"></div></div>
+    </div>
+
+  </div>
+
+  <!-- ══ RIGHT COLUMN ══ -->
+  <div class="col-right">
+
+    <div class="right-top">
+      <div class="right-date-label">Denne uken</div>
+      <div class="week-block" id="r-week"></div>
+    </div>
+
+    <div class="moon-block">
+      <svg class="moon-svg" id="r-moonsvg" width="36" height="36" viewBox="0 0 36 36"></svg>
+      <div class="moon-info">
+        <div class="moon-phase-name" id="r-moonname">Nymåne</div>
+        <div id="r-mooninfo"></div>
+      </div>
+    </div>
+
+    <div style="padding: 10px 16px;">
+      <div class="block-label">Uke</div>
+      <div style="font-family:'UnifrakturMaguntia',cursive;font-size:42px;line-height:1;color:#111" id="r-weeknum">17</div>
+      <div style="font-family:'Courier Prime',monospace;font-size:8px;color:#aaa;margin-top:2px;letter-spacing:1px" id="r-weekinfo"></div>
+    </div>
+
+  </div>
+
+  <div class="footer-strip">
+    <span class="footer-txt">oslo · 59.91°n · 10.75°ø</span>
+    <span class="footer-txt" id="f-updated">oppdatert --:--</span>
+    <span class="footer-txt">yr.no / entur</span>
+  </div>
+
+</div>
+
+<script>
+// ── CONFIG ──
+const LAT = 59.9139, LON = 10.7522;
+const FRIDE = { month: 3, day: 14 }; // 14. mars (0-indeksert måned)
+
+// ── NORSKE NAVN ──
+const DAYS = ['søndag','mandag','tirsdag','onsdag','torsdag','fredag','lørdag'];
+const DAYS_S = ['Søn','Man','Tir','Ons','Tor','Fre','Lør'];
+const MONTHS = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+
+const NAMEDAYS = {
+  "1-1":["Nyttårsdag"],"1-2":["Signhild","Sindre"],"1-3":["Arild","Arne"],"1-4":["Rigmor","Randi"],"1-5":["Brynjulf"],"1-6":["Hellig tre konger"],"1-7":["Knud"],"1-8":["Halvard"],"1-9":["Kaspar"],"1-10":["Gunhild"],"1-11":["Erling"],"1-12":["Jon"],"1-13":["Hilarius"],"1-14":["Birger"],"1-15":["Halvdan"],"1-16":["Honer"],"1-17":["Anton","Tønnes"],"1-18":["Prisca"],"1-19":["Marius"],"1-20":["Fabian","Sebastian"],"1-21":["Agnes"],"1-22":["Didrik"],"1-23":["Øyvind"],"1-24":["Timoteus"],"1-25":["Paulus"],"1-26":["Vår Frue"],"1-27":["Vilhelm"],"1-28":["Karl","Karoline"],"1-29":["Guttorm"],"1-30":["Martine"],"1-31":["Viljar"],
+  "2-1":["Pål"],"2-2":["Kyndelsmesse"],"2-3":["Blaise"],"2-4":["Ansgar"],"2-5":["Agata"],"2-6":["Dorte"],"2-7":["Richard"],"2-8":["Salomon"],"2-9":["Apollonia"],"2-10":["Øyvind"],"2-11":["Ingrid","Ingunn"],"2-12":["Arnold"],"2-13":["Beatrice"],"2-14":["Valentin"],"2-15":["Sigrid","Signe"],"2-16":["Julian"],"2-17":["Ragnvald"],"2-18":["Valentina"],"2-19":["Sigfrid"],"2-20":["Elias"],"2-21":["Gunnar"],"2-22":["Torkel"],"2-23":["Torborg"],"2-24":["Mattias"],"2-25":["Vibeke"],"2-26":["Faste"],"2-27":["Lise"],"2-28":["Leander"],"2-29":["Hildur"],
+  "3-1":["Sverre"],"3-2":["Karl"],"3-3":["Gunvor"],"3-4":["Adrian"],"3-5":["Tore"],"3-6":["Fridtjof"],"3-7":["Felicitas"],"3-8":["Internasjonale kvinnedag"],"3-9":["Franziska"],"3-10":["Aleksander"],"3-11":["Rosina"],"3-12":["Gregorius"],"3-13":["Euphemia"],"3-14":["Fride","Mathilde"],"3-15":["Kristoffer"],"3-16":["Herbert"],"3-17":["Gertrud","Patrick"],"3-18":["Edvard"],"3-19":["Josef"],"3-20":["Jorunn"],"3-21":["Benedikt"],"3-22":["Lea"],"3-23":["Turid"],"3-24":["Kata"],"3-25":["Maria budskapsdag"],"3-26":["Emanuel"],"3-27":["Rupert"],"3-28":["Sivert"],"3-29":["Jonas"],"3-30":["Amund"],"3-31":["Eirik"],
+  "4-1":["Hugo"],"4-2":["Gudmund"],"4-3":["Ferdinand"],"4-4":["Isidor"],"4-5":["Irene"],"4-6":["Vilhelm"],"4-7":["Hektor"],"4-8":["Dionysius"],"4-9":["Valdemar"],"4-10":["Ezekias"],"4-11":["Leonid"],"4-12":["Julius"],"4-13":["Ida"],"4-14":["Tiburtius"],"4-15":["Olivia"],"4-16":["Bernt"],"4-17":["Rudolf"],"4-18":["Valborg"],"4-19":["Werner"],"4-20":["Hildur"],"4-21":["Anselm"],"4-22":["Axel"],"4-23":["Adalbert","Georg"],"4-24":["Fidelus"],"4-25":["Markus"],"4-26":["Klara","Klarissa"],"4-27":["Anastasia"],"4-28":["Teresia"],"4-29":["Rikard"],"4-30":["Valborgmesse"],
+  "5-1":["Arbeidernes dag"],"5-2":["Sigurd"],"5-3":["Åsmund"],"5-4":["Monica"],"5-5":["Gotthard"],"5-6":["Margareth"],"5-7":["Gunnhild"],"5-8":["Victor"],"5-9":["Brynhild"],"5-10":["Aase"],"5-11":["Mamertus"],"5-12":["Pankras"],"5-13":["Servatius"],"5-14":["Hallvard"],"5-15":["Sofia"],"5-16":["Brendan"],"5-17":["Grunnlovsdag"],"5-18":["Erik"],"5-19":["Yolanda"],"5-20":["Bernhard"],"5-21":["Konstantia"],"5-22":["Hemming"],"5-23":["Desideria"],"5-24":["Dagmar"],"5-25":["Bedas"],"5-26":["Filip"],"5-27":["Ludvig"],"5-28":["Ingeborg"],"5-29":["Maximinus"],"5-30":["Ferdinand"],"5-31":["Petronella"],
+  "6-1":["Justin"],"6-2":["Erasmus"],"6-3":["Olivia"],"6-4":["Quirinus"],"6-5":["Bonifasius"],"6-6":["Norbert"],"6-7":["Robert"],"6-8":["Medard"],"6-9":["Columba"],"6-10":["Bogumila"],"6-11":["Barnabas"],"6-12":["Eskil"],"6-13":["Antonius"],"6-14":["Basil"],"6-15":["Vitus"],"6-16":["Benno"],"6-17":["Botolf"],"6-18":["Edburga"],"6-19":["Gervasius"],"6-20":["Florentius"],"6-21":["Alban"],"6-22":["Paulinus"],"6-23":["Jonsokaften"],"6-24":["Sankthans"],"6-25":["Elise"],"6-26":["Johannes"],"6-27":["Cyril"],"6-28":["Leo"],"6-29":["Peter","Paul"],"6-30":["Herdis"],
+  "7-1":["Halvard"],"7-2":["Ulrika"],"7-3":["Tomas"],"7-4":["Ulrik"],"7-5":["Filia"],"7-6":["Gobert"],"7-7":["Kjeld"],"7-8":["Kilian"],"7-9":["Anatolia"],"7-10":["Knud"],"7-11":["Benedikt"],"7-12":["Eskil"],"7-13":["Hanna"],"7-14":["Ulfjord"],"7-15":["Svein"],"7-16":["Ruth"],"7-17":["Aleksis"],"7-18":["Fredrik"],"7-19":["Aurea"],"7-20":["Elias","Margareta"],"7-21":["Viktor"],"7-22":["Maria Magdalena"],"7-23":["Birgitta"],"7-24":["Kristina"],"7-25":["Kristoffer","Jakob"],"7-26":["Annelise"],"7-27":["Marta"],"7-28":["Samson"],"7-29":["Olav"],"7-30":["Sigrid"],"7-31":["Ignatius"],
+  "8-1":["Pernille"],"8-2":["Gustav"],"8-3":["Nikodemus"],"8-4":["Dominikus"],"8-5":["Oswald"],"8-6":["Sixtus"],"8-7":["Kjetil"],"8-8":["Dagny"],"8-9":["Roman"],"8-10":["Laurits"],"8-11":["Susanna"],"8-12":["Klara"],"8-13":["Hippolytus"],"8-14":["Eusebius"],"8-15":["Mariamesse"],"8-16":["Rochus"],"8-17":["Hyasint"],"8-18":["Helena"],"8-19":["Rufus"],"8-20":["Bernhard"],"8-21":["Privatus"],"8-22":["Sigfrid"],"8-23":["Rose"],"8-24":["Bartolomeus"],"8-25":["Ludvig"],"8-26":["Zefyrinus"],"8-27":["Monika"],"8-28":["Augustin"],"8-29":["Johannes"],"8-30":["Felix","Ragnhild"],"8-31":["Ragnhild"],
+  "9-1":["Gisle"],"9-2":["Ingerid"],"9-3":["Gregorius"],"9-4":["Rosalia"],"9-5":["Viktor"],"9-6":["Magnus"],"9-7":["Regina"],"9-8":["Marias fødsel"],"9-9":["Alf"],"9-10":["Nikolaus"],"9-11":["Protus"],"9-12":["Tobias"],"9-13":["Johan"],"9-14":["Hellig kors"],"9-15":["Roland"],"9-16":["Kornelius"],"9-17":["Lambert"],"9-18":["Thomas"],"9-19":["Januarius"],"9-20":["Eustakius"],"9-21":["Matteus"],"9-22":["Maurits"],"9-23":["Tekla"],"9-24":["Gerard"],"9-25":["Kleofas"],"9-26":["Justina"],"9-27":["Vinsent"],"9-28":["Venceslaus"],"9-29":["Mikael"],"9-30":["Hieronymus"],
+  "10-1":["Remigius"],"10-2":["Leif"],"10-3":["Kandida"],"10-4":["Frans"],"10-5":["Placidus"],"10-6":["Bruno"],"10-7":["Rosenkrans"],"10-8":["Birgitta"],"10-9":["Dionys"],"10-10":["Frans"],"10-11":["Aslak"],"10-12":["Wilfrid"],"10-13":["Gerard"],"10-14":["Kalixtus"],"10-15":["Teresa"],"10-16":["Gallus"],"10-17":["Hedvig"],"10-18":["Lukas"],"10-19":["Frigjøring"],"10-20":["Vendelin"],"10-21":["Ursula"],"10-22":["Kordula"],"10-23":["Severin"],"10-24":["Magnus"],"10-25":["Krispin"],"10-26":["Evaristus"],"10-27":["Sabina"],"10-28":["Simon","Judas"],"10-29":["Narcissus"],"10-30":["Halvard"],"10-31":["Wolfgang"],
+  "11-1":["Alle helgens dag"],"11-2":["Alle sjelers dag"],"11-3":["Hubert"],"11-4":["Karl"],"11-5":["Rikard"],"11-6":["Leonard"],"11-7":["Engelbrecht"],"11-8":["Godfred"],"11-9":["Teodor"],"11-10":["Leo"],"11-11":["Martin"],"11-12":["Jorun"],"11-13":["Brikt"],"11-14":["Serapion"],"11-15":["Albert"],"11-16":["Margrete"],"11-17":["Ansgard"],"11-18":["Aud"],"11-19":["Elisabeth"],"11-20":["Edmund"],"11-21":["Gelasio"],"11-22":["Cecilia"],"11-23":["Klemens"],"11-24":["Krisogon"],"11-25":["Katarina"],"11-26":["Konrad"],"11-27":["Virgil"],"11-28":["Arne"],"11-29":["Saturnin"],"11-30":["Andreas"],
+  "12-1":["Eligius"],"12-2":["Bibiana"],"12-3":["Frans"],"12-4":["Barbara"],"12-5":["Sabas"],"12-6":["Nikolaus"],"12-7":["Ambrosius"],"12-8":["Marias unnfangelse"],"12-9":["Leokadia"],"12-10":["Judith"],"12-11":["Damasus"],"12-12":["Johanna"],"12-13":["Lucia"],"12-14":["Johannes"],"12-15":["Nino"],"12-16":["Adelheid"],"12-17":["Lazar"],"12-18":["Gratian"],"12-19":["Nemesis"],"12-20":["Abraham"],"12-21":["Tomas"],"12-22":["Dagfinn"],"12-23":["Thorlak"],"12-24":["Julaften"],"12-25":["Juledag"],"12-26":["Stefan"],"12-27":["Johannes"],"12-28":["De uskyldige"],"12-29":["Tomas Becket"],"12-30":["Ragnhild"],"12-31":["Nyttårsaften"]
+};
+
+// ── SOLAR CALCULATIONS ──
+function toRad(d){return d*Math.PI/180;}
+function toDeg(r){return r*180/Math.PI;}
+
+function sunTime(date, rising) {
+  const D = Math.floor((Date.UTC(date.getFullYear(),date.getMonth(),date.getDate())-Date.UTC(date.getFullYear(),0,0))/86400000);
+  const lng = LON, lat = LAT;
+  const lnghour = lng/15;
+  const t = rising ? D + (6-lnghour)/24 : D + (18-lnghour)/24;
+  const M = (0.9856*t) - 3.289;
+  let L = M + (1.916*Math.sin(toRad(M))) + (0.020*Math.sin(toRad(2*M))) + 282.634;
+  L = ((L%360)+360)%360;
+  let RA = toDeg(Math.atan(0.91764*Math.tan(toRad(L))));
+  RA = ((RA%360)+360)%360;
+  const Lquad = Math.floor(L/90)*90;
+  const RAquad = Math.floor(RA/90)*90;
+  RA = (RA + (Lquad-RAquad))/15;
+  const sinDec = 0.39782*Math.sin(toRad(L));
+  const cosDec = Math.cos(Math.asin(sinDec));
+  const cosH = (-0.01454 - sinDec*Math.sin(toRad(lat)))/(cosDec*Math.cos(toRad(lat)));
+  if(cosH<-1||cosH>1) return null;
+  let H = rising ? 360-toDeg(Math.acos(cosH)) : toDeg(Math.acos(cosH));
+  H = H/15;
+  const T = H + RA - (0.06571*t) - 6.622;
+  let UT = ((T-lnghour)%24+24)%24;
+  // Convert to local time (Norway UTC+1 or UTC+2)
+  const offset = isDST(date) ? 2 : 1;
+  UT = (UT + offset + 24) % 24;
+  return UT;
+}
+
+function isDST(date) {
+  const jan = new Date(date.getFullYear(),0,1);
+  const jul = new Date(date.getFullYear(),6,1);
+  return date.getTimezoneOffset() < Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+}
+
+function fmtSunTime(h) {
+  if(h===null) return '--:--';
+  const hh = Math.floor(h);
+  const mm = Math.round((h-hh)*60);
+  return hh.toString().padStart(2,'0') + ':' + mm.toString().padStart(2,'0');
+}
+
+function sunDaylight(date) {
+  const rise = sunTime(date, true);
+  const set = sunTime(date, false);
+  if(rise===null||set===null) return 0;
+  return set - rise;
+}
+
+// ── MOON PHASE ──
+function moonPhase(date) {
+  const known = new Date(2000,0,6);
+  const diff = (date-known)/(1000*60*60*24);
+  const cycle = 29.53059;
+  const phase = ((diff%cycle)+cycle)%cycle;
+  return phase;
+}
+
+function moonName(p) {
+  if(p<1.85) return 'Nymåne';
+  if(p<5.54) return 'Voksende måne';
+  if(p<9.22) return 'Halvmåne (voksende)';
+  if(p<12.91) return 'Nesten fullmåne';
+  if(p<16.61) return 'Fullmåne';
+  if(p<20.30) return 'Avtagende fullmåne';
+  if(p<23.99) return 'Halvmåne (avtagende)';
+  if(p<27.68) return 'Avtagende måne';
+  return 'Nymåne';
+}
+
+function drawMoon(svg, phase) {
+  const illumination = (1 - Math.cos(2*Math.PI*phase/29.53))/2;
+  const pct = Math.round(illumination*100);
+  svg.innerHTML = '';
+  const cx=18,cy=18,r=15;
+  const bg = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  bg.setAttribute('cx',cx); bg.setAttribute('cy',cy); bg.setAttribute('r',r);
+  bg.setAttribute('fill','#ddd'); bg.setAttribute('stroke','#bbb'); bg.setAttribute('stroke-width','0.5');
+  svg.appendChild(bg);
+
+  if(pct > 5) {
+    const lit = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    lit.setAttribute('cx',cx); lit.setAttribute('cy',cy); lit.setAttribute('r',r);
+    lit.setAttribute('fill','#111');
+    lit.setAttribute('clip-path','url(#moonclip)');
+    const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+    const clip = document.createElementNS('http://www.w3.org/2000/svg','clipPath');
+    clip.setAttribute('id','moonclip');
+    const cr = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    const waning = phase > 14.76;
+    if(waning) {
+      cr.setAttribute('x', cx - r + (1-illumination)*r*2);
+    } else {
+      cr.setAttribute('x', cx - r);
+    }
+    cr.setAttribute('y', cy - r - 1);
+    cr.setAttribute('width', illumination*r*2);
+    cr.setAttribute('height', r*2+2);
+    clip.appendChild(cr); defs.appendChild(clip); svg.appendChild(defs);
+    svg.appendChild(lit);
+  }
+  document.getElementById('r-mooninfo').textContent = pct + '% belyst';
+}
+
+// ── COUNTDOWN ──
+function daysUntil(month0, day) {
+  const now = new Date();
+  const y = now.getFullYear();
+  let target = new Date(y, month0, day);
+  if(target <= now) target = new Date(y+1, month0, day);
+  return Math.ceil((target - now)/(1000*60*60*24));
+}
+
+// ── WEEK NUMBER ──
+function getWeekNum(d) {
+  const date = new Date(d.getTime());
+  date.setHours(0,0,0,0);
+  date.setDate(date.getDate()+3-(date.getDay()+6)%7);
+  const week1 = new Date(date.getFullYear(),0,4);
+  return 1+Math.round(((date.getTime()-week1.getTime())/86400000-3+(week1.getDay()+6)%7)/7);
+}
+
+// ── WEATHER ──
+function wxIcon(code, svgEl) {
+  svgEl.innerHTML = '';
+  const s = code || 'cloudy';
+  const add = (el,attrs,parent) => {
+    const e = document.createElementNS('http://www.w3.org/2000/svg',el);
+    for(const [k,v] of Object.entries(attrs)) e.setAttribute(k,v);
+    (parent||svgEl).appendChild(e); return e;
+  };
+
+  if(s.includes('clearsky') || s.includes('fair')) {
+    add('circle',{cx:26,cy:26,r:14,fill:'none',stroke:'#111','stroke-width':'2'});
+    for(let i=0;i<8;i++){
+      const a=toRad(i*45), x1=26+18*Math.cos(a), y1=26+18*Math.sin(a), x2=26+22*Math.cos(a), y2=26+22*Math.sin(a);
+      add('line',{x1,y1,x2,y2,stroke:'#111','stroke-width':'1.5'});
+    }
+  } else if(s.includes('snow')) {
+    for(let i=0;i<6;i++){
+      const a=toRad(i*60);
+      add('line',{x1:26,y1:26,x2:26+16*Math.cos(a),y2:26+16*Math.sin(a),stroke:'#111','stroke-width':'2'});
+    }
+    add('circle',{cx:26,cy:26,r:3,fill:'#111'});
+  } else if(s.includes('rain') || s.includes('shower') || s.includes('sleet')) {
+    add('path',{d:'M16 24 Q18 12 26 14 Q28 6 36 10 Q44 10 42 24 Z',fill:'none',stroke:'#111','stroke-width':'1.5'});
+    add('line',{x1:20,y1:32,x2:18,y2:40,stroke:'#111','stroke-width':'1.5'});
+    add('line',{x1:26,y1:32,x2:24,y2:40,stroke:'#111','stroke-width':'1.5'});
+    add('line',{x1:32,y1:32,x2:30,y2:40,stroke:'#111','stroke-width':'1.5'});
+  } else if(s.includes('thunder')) {
+    add('path',{d:'M16 24 Q18 12 26 14 Q28 6 36 10 Q44 10 42 24 Z',fill:'none',stroke:'#111','stroke-width':'1.5'});
+    add('path',{d:'M28 28 L23 36 L27 36 L22 46 L32 33 L27 33 Z',fill:'#111'});
+  } else if(s.includes('fog')) {
+    for(let i=0;i<4;i++) add('line',{x1:10,y1:16+i*8,x2:42,y2:16+i*8,stroke:'#111','stroke-width':'1.5','stroke-linecap':'round',opacity:1-i*0.2});
+  } else {
+    add('path',{d:'M14 32 Q16 20 24 22 Q26 14 34 18 Q42 18 40 32 Z',fill:'none',stroke:'#111','stroke-width':'1.5'});
+    add('path',{d:'M8 32 Q10 24 16 25 Q18 20 22 22',fill:'none',stroke:'#bbb','stroke-width':'1.5'});
+  }
+}
+
+function wxDesc(code) {
+  const map = {
+    clearsky:'Klarvær', fair:'Lettskyet', partlycloudy:'Delvis skyet',
+    cloudy:'Overskyet', fog:'Tåke', lightrain:'Lett regn', rain:'Regn',
+    heavyrain:'Kraftig regn', lightsleet:'Lett sludd', sleet:'Sludd',
+    lightsnow:'Lett snø', snow:'Snø', rainshowers_day:'Regnbyger',
+    snowshowers_day:'Snøbyger', thunder:'Tordenvær',
+    lightrainshowers_day:'Lette regnbyger', heavyrainshowers_day:'Kraftige regnbyger'
+  };
+  const base = (code||'').replace(/_day|_night|_polartwilight/g,'');
+  return map[base] || base.replace(/_/g,' ');
+}
+
+async function fetchWeather() {
+  try {
+    const r = await fetch(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${LAT}&lon=${LON}`,
+      {headers:{'User-Agent':'oslo-almanakk/1.0 github.com/eilifursinreed/almanakk'}});
+    const d = await r.json();
+    const ts = d.properties.timeseries;
+    const now = ts[0];
+    const inst = now.data.instant.details;
+    const next = now.data.next_1_hours || now.data.next_6_hours;
+    const sym = next ? next.summary.symbol_code : 'cloudy';
+    const temp = Math.round(inst.air_temperature);
+    const wind = Math.round(inst.wind_speed);
+    const humid = Math.round(inst.relative_humidity);
+    const precip = next ? (next.details.precipitation_amount||0).toFixed(1) : '0';
+
+    document.getElementById('c-wxtemp').textContent = temp + '°';
+    document.getElementById('c-wxdesc').textContent = wxDesc(sym);
+    document.getElementById('c-wxmeta').innerHTML =
+      `Vind ${wind} m/s &nbsp;·&nbsp; Fukt ${humid}%<br>Nedbør ${precip} mm`;
+    wxIcon(sym, document.getElementById('c-wxsvg'));
+
+    const DAYS_FC = ['Søn','Man','Tir','Ons','Tor','Fre','Lør'];
+    const forecast=[]; const seenDays=new Set();
+    for(const t of ts) {
+      const dt = new Date(t.time);
+      const dk = dt.toDateString();
+      if(dt <= new Date()) continue;
+      if(seenDays.has(dk)) continue;
+      if(dt.getHours() !== 12) continue;
+      seenDays.add(dk);
+      const nx = t.data.next_6_hours || t.data.next_1_hours;
+      if(!nx) continue;
+      const miniSvg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+      miniSvg.setAttribute('width','24'); miniSvg.setAttribute('height','24');
+      miniSvg.setAttribute('viewBox','0 0 52 52');
+      miniSvg.classList.add('fc-icon');
+      wxIcon(nx.summary.symbol_code, miniSvg);
+      forecast.push({
+        day: DAYS_FC[dt.getDay()],
+        svg: miniSvg,
+        hi: Math.round(nx.details.air_temperature_max || t.data.instant.details.air_temperature),
+        lo: Math.round(nx.details.air_temperature_min || t.data.instant.details.air_temperature)
+      });
+      if(forecast.length>=4) break;
+    }
+
+    const fcEl = document.getElementById('c-forecast');
+    fcEl.innerHTML = '';
+    for(const f of forecast) {
+      const cell = document.createElement('div');
+      cell.className = 'fc-cell';
+      cell.innerHTML = `<div class="fc-day">${f.day}</div>`;
+      cell.appendChild(f.svg);
+      cell.innerHTML += `<div class="fc-hi">${f.hi}°</div><div class="fc-lo">${f.lo}°</div>`;
+      fcEl.appendChild(cell);
+    }
+  } catch(e) {
+    document.getElementById('c-wxdesc').textContent = 'Kunne ikke hente vær';
+  }
+}
+
+// ── BIRTHDAYS ──
+async function fetchBirthdays(dateKey) {
+  try {
+    const r = await fetch('data/birthdays.json');
+    const data = await r.json();
+    const todays = data[dateKey] || [];
+    const el = document.getElementById('l-birthdays');
+    if(todays.length === 0) {
+      el.innerHTML = '<div class="bday-info" style="font-style:italic">Ingen i dag</div>';
+      return;
+    }
+    el.innerHTML = todays.map(b => `
+      <div class="bday-item">
+        <div class="bday-name${b.privat?' privat':''}">${b.navn}</div>
+        <div class="bday-info">${b.info}</div>
+      </div>`).join('');
+  } catch(e) {
+    document.getElementById('l-birthdays').innerHTML =
+      '<div class="bday-info">birthdays.json ikke funnet</div>';
+  }
+}
+
+// ── MAIN INIT ──
+function init() {
+  const now = new Date();
+  const mm = now.getMonth()+1, dd = now.getDate();
+  const dateKey = String(mm).padStart(2,'0') + '-' + String(dd).padStart(2,'0');
+
+  // Date
+  document.getElementById('l-daynum').textContent = dd;
+  document.getElementById('l-dayname').textContent = DAYS[now.getDay()];
+  document.getElementById('l-monthyear').textContent = MONTHS[now.getMonth()] + ' · ' + now.getFullYear();
+  document.getElementById('c-datestr').textContent = DAYS[now.getDay()] + ' ' + dd + '. ' + MONTHS[now.getMonth()] + ' ' + now.getFullYear();
+
+  // Nameday
+  const nd = NAMEDAYS[`${mm}-${dd}`] || ['—'];
+  document.getElementById('l-nameday').textContent = nd.join(', ');
+
+  // Sun
+  const rise = sunTime(now, true);
+  const set = sunTime(now, false);
+  document.getElementById('l-sunrise').textContent = fmtSunTime(rise);
+  document.getElementById('l-sunset').textContent = fmtSunTime(set);
+
+  const dlToday = sunDaylight(now);
+  const yesterday = new Date(now); yesterday.setDate(dd-1);
+  const dlYest = sunDaylight(yesterday);
+  const diffMin = dlToday - dlYest;
+  const diffSec = Math.round(Math.abs(diffMin)*3600);
+  const diffM = Math.floor(diffSec/60), diffS = diffSec%60;
+  const hh = Math.floor(dlToday), mm2 = Math.round((dlToday-hh)*60);
+  document.getElementById('l-dagslys').innerHTML =
+    `Dagslys: <strong>${hh}t ${mm2}m</strong>`;
+  const diffEl = document.getElementById('l-soldiff');
+  if(diffMin >= 0) {
+    diffEl.className = 'sol-diff-pos';
+    diffEl.textContent = `+${diffM}m ${diffS}s mer enn i går`;
+  } else {
+    diffEl.className = 'sol-diff-neg';
+    diffEl.textContent = `–${diffM}m ${diffS}s mindre enn i går`;
+  }
+
+  // Countdowns
+  document.getElementById('c-cd-fride').textContent = daysUntil(FRIDE.month, FRIDE.day);
+  document.getElementById('c-cd-jul').textContent = daysUntil(11, 24);
+
+  // Year progress
+  const start = new Date(now.getFullYear(),0,1);
+  const end = new Date(now.getFullYear()+1,0,1);
+  const pct = Math.round(((now-start)/(end-start))*100);
+  document.getElementById('c-yrbar').style.width = pct+'%';
+  document.getElementById('c-yrpct').textContent = pct+'%';
+
+  // Week
+  const wn = getWeekNum(now);
+  document.getElementById('r-weeknum').textContent = wn;
+  document.getElementById('r-weekinfo').textContent =
+    'av 52 · ' + MONTHS[now.getMonth()];
+
+  // Week mini calendar
+  const weekEl = document.getElementById('r-week');
+  weekEl.innerHTML = '';
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (now.getDay()+6)%7);
+  for(let i=0;i<7;i++) {
+    const d = new Date(monday); d.setDate(monday.getDate()+i);
+    const isToday = d.toDateString()===now.toDateString();
+    const row = document.createElement('div');
+    row.className = 'week-row' + (isToday?' today':'');
+    row.innerHTML = `<span class="week-dayname">${DAYS_S[(d.getDay())]}</span><span class="week-date">${d.getDate()}</span>`;
+    weekEl.appendChild(row);
+  }
+
+  // Moon
+  const phase = moonPhase(now);
+  document.getElementById('r-moonname').textContent = moonName(phase);
+  drawMoon(document.getElementById('r-moonsvg'), phase);
+
+  // Updated
+  document.getElementById('f-updated').textContent =
+    'oppdatert ' + now.toLocaleTimeString('no-NO',{hour:'2-digit',minute:'2-digit'});
+
+  // Async
+  fetchWeather();
+  fetchBirthdays(dateKey);
+}
+
+init();
+setInterval(init, 30*60*1000);
+</script>
+</body>
+</html>
