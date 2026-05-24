@@ -2,854 +2,970 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=800">
-<title>Oslo Almanakk</title>
+<meta name="viewport" content="width=800, initial-scale=1.0">
+<title>Almanakk</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Courier+Prime:wght@400;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-*{box-sizing:border-box;margin:0;padding:0;}
+  :root {
+    --bg:       #f0ece3;
+    --ink:      #1a1814;
+    --muted:    #7a7060;
+    --warm:     #c8a96e;
+    --red:      #c0392b;
+    --amber:    #d4874a;
+    --blue:     #4a6fa5;
+    --green:    #4a7c59;
+    --divider:  rgba(26,24,20,0.12);
+  }
 
-body {
-  background: #111;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 20px;
-}
+  html, body {
+    width: 800px;
+    height: 480px;
+    overflow: hidden;
+    background: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--ink);
+  }
 
-#screen {
-  width: 800px;
-  height: 480px;
-  background: #f2ede4;
-  color: #111;
-  position: relative;
-  overflow: hidden;
-  font-family: 'Libre Baskerville', serif;
-}
+  /* ── LAYOUT ── */
+  .page {
+    width: 800px;
+    height: 480px;
+    display: grid;
+    grid-template-columns: 200px 1fr 160px;
+    grid-template-rows: 1fr auto;
+    gap: 0;
+    position: relative;
+  }
 
-/* ── LAYOUT GRID ── */
-.col-left   { position:absolute; left:0;    top:0; width:210px; height:480px; border-right:1.5px solid #111; }
-.col-center { position:absolute; left:210px;top:0; width:340px; height:480px; border-right:1.5px solid #111; }
-.col-right  { position:absolute; left:550px;top:0; width:250px; height:480px; }
+  /* subtle texture overlay */
+  .page::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(200,169,110,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(74,111,165,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
 
-/* ── LEFT COLUMN ── */
-.date-block {
-  padding: 16px 16px 12px;
-  border-bottom: 1.5px solid #111;
-}
-.date-dayname {
-  font-family: 'Courier Prime', monospace;
-  font-size: 9px;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  color: #666;
-  margin-bottom: 2px;
-}
-.date-num {
-  font-family: 'UnifrakturMaguntia', cursive;
-  font-size: 88px;
-  line-height: 0.9;
-  color: #111;
-}
-.date-monthyear {
-  font-family: 'Courier Prime', monospace;
-  font-size: 10px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: #c0392b;
-  margin-top: 4px;
-}
+  /* ── LEFT COLUMN ── */
+  .col-left {
+    grid-row: 1 / 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    border-right: 1px solid var(--divider);
+    position: relative;
+    z-index: 1;
+    gap: 16px;
+  }
 
-.nameday-block {
-  padding: 10px 16px;
-  border-bottom: 1px solid #ccc;
-}
-.block-label {
-  font-family: 'Courier Prime', monospace;
-  font-size: 8px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: #999;
-  margin-bottom: 4px;
-}
-.nameday-names {
-  font-size: 13px;
-  font-style: italic;
-  color: #111;
-  line-height: 1.4;
-}
+  .sun-wrap {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-.sol-block {
-  padding: 10px 16px;
-  border-bottom: 1px solid #ccc;
-}
-.sol-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 2px 0;
-}
-.sol-label {
-  font-family: 'Courier Prime', monospace;
-  font-size: 9px;
-  color: #888;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.sol-time {
-  font-family: 'Courier Prime', monospace;
-  font-size: 13px;
-  font-weight: 700;
-  color: #111;
-}
-.sol-dagslys {
-  font-family: 'Courier Prime', monospace;
-  font-size: 9px;
-  color: #888;
-  margin-top: 5px;
-  line-height: 1.5;
-}
-.sol-diff-pos { color: #c0392b; }
-.sol-diff-neg { color: #555; }
+  .sun-svg {
+    width: 110px;
+    height: 110px;
+  }
 
-.bday-block {
-  padding: 10px 16px;
-}
-.bday-item {
-  padding: 4px 0;
-  border-bottom: 0.5px solid #ddd;
-}
-.bday-item:last-child { border-bottom: none; }
-.bday-name {
-  font-size: 11px;
-  font-weight: 700;
-  color: #111;
-}
-.bday-name.privat { color: #c0392b; }
-.bday-info {
-  font-family: 'Courier Prime', monospace;
-  font-size: 9px;
-  color: #888;
-  margin-top: 1px;
-}
+  .moon-svg {
+    width: 80px;
+    height: 80px;
+  }
 
-/* ── CENTER COLUMN ── */
-.masthead {
-  padding: 14px 20px 10px;
-  border-bottom: 2px solid #111;
-  text-align: center;
-  position: relative;
-}
-.masthead-title {
-  font-family: 'UnifrakturMaguntia', cursive;
-  font-size: 32px;
-  line-height: 1;
-  color: #111;
-  letter-spacing: 1px;
-}
-.masthead-sub {
-  font-family: 'Courier Prime', monospace;
-  font-size: 8px;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  color: #999;
-  margin-top: 2px;
-}
-.masthead-ornament {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-}
-.masthead-ornament.left { left: 12px; }
-.masthead-ornament.right { right: 12px; }
+  .date-block {
+    text-align: center;
+  }
 
-.wx-block {
-  padding: 12px 20px;
-  border-bottom: 1.5px solid #111;
-}
-.wx-main {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 10px;
-}
-.wx-temp {
-  font-family: 'UnifrakturMaguntia', cursive;
-  font-size: 62px;
-  line-height: 1;
-  color: #111;
-}
-.wx-details {
-  flex: 1;
-}
-.wx-desc {
-  font-size: 12px;
-  font-style: italic;
-  color: #444;
-  margin-bottom: 3px;
-}
-.wx-meta {
-  font-family: 'Courier Prime', monospace;
-  font-size: 9px;
-  color: #888;
-  line-height: 1.7;
-}
-.wx-svg { flex-shrink: 0; }
+  .date-day {
+    font-family: 'Playfair Display', serif;
+    font-size: 52px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--ink);
+  }
 
-.forecast-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
-}
-.fc-cell {
-  text-align: center;
-  border: 0.5px solid #ccc;
-  padding: 5px 3px;
-  background: #ede8df;
-}
-.fc-day {
-  font-family: 'Courier Prime', monospace;
-  font-size: 8px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: #888;
-}
-.fc-icon { margin: 3px auto; display: block; }
-.fc-hi {
-  font-size: 12px;
-  font-weight: 700;
-  color: #111;
-}
-.fc-lo {
-  font-family: 'Courier Prime', monospace;
-  font-size: 9px;
-  color: #888;
-}
+  .date-month {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 2px;
+  }
 
-.countdown-block {
-  padding: 12px 20px;
-  border-bottom: 1px solid #ccc;
-}
-.cd-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  padding: 4px 0;
-  border-bottom: 0.5px solid #e0dbd2;
-}
-.cd-row:last-child { border-bottom: none; }
-.cd-label {
-  font-family: 'Courier Prime', monospace;
-  font-size: 10px;
-  color: #666;
-  letter-spacing: 0.5px;
-}
-.cd-val {
-  font-size: 18px;
-  font-weight: 700;
-  color: #c0392b;
-}
-.cd-unit {
-  font-family: 'Courier Prime', monospace;
-  font-size: 9px;
-  color: #999;
-  margin-left: 3px;
-}
+  .date-weekday {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    font-style: italic;
+    color: var(--warm);
+    margin-top: 3px;
+  }
 
-.yearbar-block {
-  padding: 10px 20px;
-}
-.yb-label {
-  font-family: 'Courier Prime', monospace;
-  font-size: 8px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: #aaa;
-  margin-bottom: 5px;
-  display: flex;
-  justify-content: space-between;
-}
-.yb-outer {
-  height: 5px;
-  background: #ddd;
-  border: 0.5px solid #bbb;
-}
-.yb-inner {
-  height: 100%;
-  background: #111;
-}
+  .nameday {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.4;
+    padding: 0 4px;
+  }
 
-/* ── RIGHT COLUMN ── */
-.right-top {
-  padding: 14px 16px 10px;
-  border-bottom: 1.5px solid #111;
-}
-.right-date-label {
-  font-family: 'UnifrakturMaguntia', cursive;
-  font-size: 18px;
-  color: #111;
-  margin-bottom: 6px;
-}
+  .nameday strong {
+    display: block;
+    font-size: 12px;
+    color: var(--ink);
+    font-weight: 500;
+  }
 
-.moon-block {
-  padding: 10px 16px;
-  border-bottom: 1px solid #ccc;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.moon-svg { flex-shrink: 0; }
-.moon-info {
-  font-family: 'Courier Prime', monospace;
-  font-size: 10px;
-  color: #666;
-  line-height: 1.6;
-}
-.moon-phase-name {
-  font-size: 11px;
-  font-weight: 700;
-  color: #111;
-  font-family: 'Libre Baskerville', serif;
-}
+  /* ── CENTER COLUMN ── */
+  .col-center {
+    grid-row: 1 / 2;
+    display: flex;
+    flex-direction: column;
+    padding: 22px 20px 16px 22px;
+    gap: 14px;
+    position: relative;
+    z-index: 1;
+  }
 
-.week-block {
-  padding: 10px 16px;
-}
-.week-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 3px 0;
-  border-bottom: 0.5px solid #e0dbd2;
-  font-family: 'Courier Prime', monospace;
-  font-size: 10px;
-}
-.week-row:last-child { border-bottom: none; }
-.week-row.today {
-  color: #c0392b;
-  font-weight: 700;
-}
-.week-dayname { color: #888; width: 30px; }
-.week-row.today .week-dayname { color: #c0392b; }
-.week-date { color: #111; }
+  /* Current weather */
+  .weather-now {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
 
-.footer-strip {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 22px;
-  border-top: 1px solid #ccc;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  background: #ede8df;
-}
-.footer-txt {
-  font-family: 'Courier Prime', monospace;
-  font-size: 8px;
-  letter-spacing: 1px;
-  color: #aaa;
-  text-transform: uppercase;
-}
+  .weather-icon-main {
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+  }
+
+  .temp-main {
+    font-family: 'Playfair Display', serif;
+    font-size: 58px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--ink);
+    letter-spacing: -2px;
+  }
+
+  .temp-unit {
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--muted);
+    vertical-align: super;
+  }
+
+  .temp-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .weather-desc {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  /* Sun row */
+  .sun-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 8px 10px;
+    background: rgba(200,169,110,0.12);
+    border-radius: 8px;
+  }
+
+  .sun-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--ink);
+  }
+
+  .sun-item svg { flex-shrink: 0; }
+
+  .sun-sep {
+    flex: 1;
+    height: 1px;
+    background: var(--divider);
+  }
+
+  .daylight-diff {
+    font-size: 11px;
+    color: var(--green);
+    font-weight: 500;
+  }
+
+  /* 4-day forecast */
+  .forecast {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+
+  .forecast-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 4px;
+    border-radius: 8px;
+    background: rgba(26,24,20,0.04);
+  }
+
+  .fc-name {
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+
+  .fc-icon { width: 28px; height: 28px; }
+
+  .fc-temp {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .fc-temp .lo {
+    color: var(--muted);
+    font-weight: 300;
+  }
+
+  /* ── RIGHT COLUMN ── */
+  .col-right {
+    grid-row: 1 / 2;
+    display: flex;
+    flex-direction: column;
+    padding: 22px 16px 16px 12px;
+    gap: 14px;
+    position: relative;
+    z-index: 1;
+    border-left: 1px solid var(--divider);
+  }
+
+  .section-label {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  /* Moon */
+  .moon-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .moon-name {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    font-style: italic;
+  }
+
+  /* Countdowns */
+  .countdown-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .countdown-item {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .cd-label {
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .cd-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+
+  .cd-unit {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 300;
+    color: var(--muted);
+  }
+
+  /* Yellowstone */
+  .yellowstone {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 7px 8px;
+    border-radius: 6px;
+    background: rgba(192,57,43,0.06);
+    border: 1px solid rgba(192,57,43,0.15);
+  }
+
+  .ys-status {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .ys-detail {
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.3;
+  }
+
+  .ys-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .ys-dot.active { background: var(--red); }
+
+  /* ── BOTTOM BAR ── */
+  .bottom-bar {
+    grid-column: 2 / 4;
+    grid-row: 2 / 3;
+    border-top: 1px solid var(--divider);
+    padding: 8px 20px 10px 22px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Week calendar */
+  .week-cal {
+    display: flex;
+    gap: 4px;
+    align-items: flex-end;
+  }
+
+  .wk-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    width: 28px;
+    padding: 4px 2px 3px;
+    border-radius: 6px;
+  }
+
+  .wk-day.today {
+    background: var(--ink);
+  }
+
+  .wk-name {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .wk-day.today .wk-name { color: rgba(255,255,255,0.6); }
+
+  .wk-num {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .wk-day.today .wk-num { color: #fff; }
+
+  .bottom-sep {
+    width: 1px;
+    height: 30px;
+    background: var(--divider);
+  }
+
+  /* Year progress */
+  .year-progress {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .yr-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .yr-bar-bg {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(26,24,20,0.1);
+    overflow: hidden;
+  }
+
+  .yr-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--warm);
+  }
+
+  /* Birthday badge */
+  .birthday-badge {
+    font-size: 11px;
+    color: var(--red);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .updated {
+    font-size: 9px;
+    color: var(--muted);
+    white-space: nowrap;
+    margin-left: auto;
+  }
 </style>
 </head>
 <body>
-<div id="screen">
+<div class="page">
 
-  <!-- ══ LEFT COLUMN ══ -->
+  <!-- LEFT: date + sun/moon -->
   <div class="col-left">
-
+    <div id="orb-wrap" class="sun-wrap">
+      <!-- filled by JS -->
+    </div>
     <div class="date-block">
-      <div class="date-dayname" id="l-dayname">mandag</div>
-      <div class="date-num" id="l-daynum">26</div>
-      <div class="date-monthyear" id="l-monthyear">april · 2026</div>
+      <div class="date-day" id="date-day">--</div>
+      <div class="date-month" id="date-month">---</div>
+      <div class="date-weekday" id="date-weekday">---</div>
     </div>
-
-    <div class="nameday-block">
-      <div class="block-label">Navnedag</div>
-      <div class="nameday-names" id="l-nameday">Klara, Klarissa</div>
+    <div class="nameday" id="nameday-block">
+      <strong id="nameday-names">···</strong>
+      <span>har navnedag</span>
     </div>
-
-    <div class="sol-block">
-      <div class="block-label">Sol – Oslo</div>
-      <div class="sol-row">
-        <span class="sol-label">
-          <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="2.5" fill="#111"/><line x1="5" y1="0" x2="5" y2="1.5" stroke="#111" stroke-width="1"/><line x1="5" y1="8.5" x2="5" y2="10" stroke="#111" stroke-width="1"/><line x1="0" y1="5" x2="1.5" y2="5" stroke="#111" stroke-width="1"/><line x1="8.5" y1="5" x2="10" y2="5" stroke="#111" stroke-width="1"/></svg>
-          Oppgang
-        </span>
-        <span class="sol-time" id="l-sunrise">05:38</span>
-      </div>
-      <div class="sol-row">
-        <span class="sol-label">
-          <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="2.5" fill="none" stroke="#111" stroke-width="1"/><line x1="5" y1="0" x2="5" y2="1.5" stroke="#111" stroke-width="1"/><line x1="5" y1="8.5" x2="5" y2="10" stroke="#111" stroke-width="1"/><line x1="0" y1="5" x2="1.5" y2="5" stroke="#111" stroke-width="1"/><line x1="8.5" y1="5" x2="10" y2="5" stroke="#111" stroke-width="1"/></svg>
-          Nedgang
-        </span>
-        <span class="sol-time" id="l-sunset">21:12</span>
-      </div>
-      <div class="sol-dagslys" id="l-dagslys">
-        Dagslys: <strong>15t 34m</strong><br>
-        <span id="l-soldiff" class="sol-diff-pos">+3m 42s mer enn i går</span>
-      </div>
-    </div>
-
-    <div class="bday-block">
-      <div class="block-label">Bursdag i dag</div>
-      <div id="l-birthdays"><div class="bday-info" style="font-style:italic">Ingen i dag</div></div>
-    </div>
-
   </div>
 
-  <!-- ══ CENTER COLUMN ══ -->
+  <!-- CENTER: weather -->
   <div class="col-center">
-
-    <div class="masthead">
-      <svg class="masthead-ornament left" width="24" height="40" viewBox="0 0 24 40">
-        <path d="M12 2 C6 8, 4 14, 12 20 C20 26, 18 32, 12 38" stroke="#ccc" stroke-width="1" fill="none"/>
-        <circle cx="12" cy="2" r="2" fill="#ccc"/>
-        <circle cx="12" cy="38" r="2" fill="#ccc"/>
-      </svg>
-      <div class="masthead-title">Oslo Almanakk</div>
-      <div class="masthead-sub" id="c-datestr">søndag 26. april 2026</div>
-      <svg class="masthead-ornament right" width="24" height="40" viewBox="0 0 24 40">
-        <path d="M12 2 C18 8, 20 14, 12 20 C4 26, 6 32, 12 38" stroke="#ccc" stroke-width="1" fill="none"/>
-        <circle cx="12" cy="2" r="2" fill="#ccc"/>
-        <circle cx="12" cy="38" r="2" fill="#ccc"/>
-      </svg>
-    </div>
-
-    <div class="wx-block">
-      <div class="wx-main">
-        <svg class="wx-svg" id="c-wxsvg" width="52" height="52" viewBox="0 0 52 52"></svg>
-        <div class="wx-temp" id="c-wxtemp">--°</div>
-        <div class="wx-details">
-          <div class="wx-desc" id="c-wxdesc">Laster vær...</div>
-          <div class="wx-meta" id="c-wxmeta"></div>
-        </div>
-      </div>
-      <div class="forecast-row" id="c-forecast"></div>
-    </div>
-
-    <div class="countdown-block">
-      <div class="cd-row">
-        <span class="cd-label">🎂 Fride</span>
-        <span><span class="cd-val" id="c-cd-fride">--</span><span class="cd-unit">dager</span></span>
-      </div>
-      <div class="cd-row">
-        <span class="cd-label">🎄 Julaften</span>
-        <span><span class="cd-val" id="c-cd-jul">--</span><span class="cd-unit">dager</span></span>
+    <div class="weather-now">
+      <svg id="main-weather-icon" class="weather-icon-main" viewBox="0 0 56 56"></svg>
+      <div>
+        <div class="temp-main"><span id="temp-now">--</span><span class="temp-unit">°</span></div>
+        <div class="temp-sub">Kjennes som <span id="feels-like">--</span>°</div>
+        <div class="weather-desc" id="weather-desc">Henter vær…</div>
       </div>
     </div>
 
-    <div class="yearbar-block">
-      <div class="yb-label">
-        <span>Året er omme</span>
-        <span id="c-yrpct">--</span>
+    <div class="sun-row">
+      <div class="sun-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d4874a" stroke-width="2">
+          <circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/>
+          <line x1="12" y1="18" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="7.05" y2="7.05"/>
+          <line x1="16.95" y1="16.95" x2="19.78" y2="19.78"/>
+          <line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="7.05" y2="16.95"/><line x1="16.95" y1="7.05" x2="19.78" y2="4.22"/>
+        </svg>
+        <span id="sunrise-time">--:--</span>
       </div>
-      <div class="yb-outer"><div class="yb-inner" id="c-yrbar" style="width:0%"></div></div>
+      <div class="sun-sep"></div>
+      <div class="daylight-diff" id="daylight-diff">+0 min</div>
+      <div class="sun-sep"></div>
+      <div class="sun-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a6fa5" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <span id="sunset-time">--:--</span>
+      </div>
     </div>
 
+    <div class="forecast" id="forecast-row">
+      <!-- filled by JS -->
+    </div>
   </div>
 
-  <!-- ══ RIGHT COLUMN ══ -->
+  <!-- RIGHT: moon + countdowns + Yellowstone -->
   <div class="col-right">
 
-    <div class="right-top">
-      <div class="right-date-label">Denne uken</div>
-      <div class="week-block" id="r-week"></div>
+    <div class="moon-block">
+      <div class="section-label">Månefase</div>
+      <svg id="moon-svg" class="moon-svg" viewBox="0 0 80 80"></svg>
+      <div class="moon-name" id="moon-name">···</div>
     </div>
 
-    <div class="moon-block">
-      <svg class="moon-svg" id="r-moonsvg" width="36" height="36" viewBox="0 0 36 36"></svg>
-      <div class="moon-info">
-        <div class="moon-phase-name" id="r-moonname">Nymåne</div>
-        <div id="r-mooninfo"></div>
+    <div>
+      <div class="section-label">Nedtelling</div>
+      <div class="countdown-list" id="countdown-list">
+        <!-- filled by JS -->
       </div>
     </div>
 
-    <div style="padding: 10px 16px;">
-      <div class="block-label">Uke</div>
-      <div style="font-family:'UnifrakturMaguntia',cursive;font-size:42px;line-height:1;color:#111" id="r-weeknum">17</div>
-      <div style="font-family:'Courier Prime',monospace;font-size:8px;color:#aaa;margin-top:2px;letter-spacing:1px" id="r-weekinfo"></div>
+    <div class="yellowstone" id="yellowstone-box">
+      <div class="section-label" style="margin-bottom:2px">Yellowstone</div>
+      <div class="ys-status" id="ys-status"><span class="ys-dot"></span>Sjekker…</div>
+      <div class="ys-detail" id="ys-detail"></div>
     </div>
 
   </div>
 
-  <div class="footer-strip">
-    <span class="footer-txt">oslo · 59.91°n · 10.75°ø</span>
-    <span class="footer-txt" id="f-updated">oppdatert --:--</span>
-    <span class="footer-txt">yr.no / entur</span>
+  <!-- BOTTOM: week + year -->
+  <div class="bottom-bar">
+    <div class="week-cal" id="week-cal"></div>
+    <div class="bottom-sep"></div>
+    <div class="year-progress">
+      <div class="yr-label">
+        <span>Uke <span id="week-num">--</span></span>
+        <span id="year-pct">--%</span>
+      </div>
+      <div class="yr-bar-bg">
+        <div class="yr-bar-fill" id="yr-bar" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="birthday-badge" id="birthday-badge"></div>
+    <div class="updated" id="updated"></div>
   </div>
 
 </div>
 
 <script>
 // ── CONFIG ──
-const LAT = 59.9139, LON = 10.7522;
-const FRIDE = { month: 3, day: 14 }; // 14. mars (0-indeksert måned)
-
-// ── NORSKE NAVN ──
-const DAYS = ['søndag','mandag','tirsdag','onsdag','torsdag','fredag','lørdag'];
-const DAYS_S = ['Søn','Man','Tir','Ons','Tor','Fre','Lør'];
+const LAT = 59.9139, LON = 10.7522; // Oslo
+const COUNTDOWNS = [
+  { label: 'Til julaften', month: 12, day: 24 },
+  { label: 'Fride 🎂', month: 3, day: 14 },
+];
+const DAYS   = ['søndag','mandag','tirsdag','onsdag','torsdag','fredag','lørdag'];
+const DAYS_S = ['søn','man','tir','ons','tor','fre','lør'];
 const MONTHS = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+const MONTHS_S = ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des'];
 
+// Norwegian namedays (subset – full list)
 const NAMEDAYS = {
-  "1-1":["Nyttårsdag"],"1-2":["Signhild","Sindre"],"1-3":["Arild","Arne"],"1-4":["Rigmor","Randi"],"1-5":["Brynjulf"],"1-6":["Hellig tre konger"],"1-7":["Knud"],"1-8":["Halvard"],"1-9":["Kaspar"],"1-10":["Gunhild"],"1-11":["Erling"],"1-12":["Jon"],"1-13":["Hilarius"],"1-14":["Birger"],"1-15":["Halvdan"],"1-16":["Honer"],"1-17":["Anton","Tønnes"],"1-18":["Prisca"],"1-19":["Marius"],"1-20":["Fabian","Sebastian"],"1-21":["Agnes"],"1-22":["Didrik"],"1-23":["Øyvind"],"1-24":["Timoteus"],"1-25":["Paulus"],"1-26":["Vår Frue"],"1-27":["Vilhelm"],"1-28":["Karl","Karoline"],"1-29":["Guttorm"],"1-30":["Martine"],"1-31":["Viljar"],
-  "2-1":["Pål"],"2-2":["Kyndelsmesse"],"2-3":["Blaise"],"2-4":["Ansgar"],"2-5":["Agata"],"2-6":["Dorte"],"2-7":["Richard"],"2-8":["Salomon"],"2-9":["Apollonia"],"2-10":["Øyvind"],"2-11":["Ingrid","Ingunn"],"2-12":["Arnold"],"2-13":["Beatrice"],"2-14":["Valentin"],"2-15":["Sigrid","Signe"],"2-16":["Julian"],"2-17":["Ragnvald"],"2-18":["Valentina"],"2-19":["Sigfrid"],"2-20":["Elias"],"2-21":["Gunnar"],"2-22":["Torkel"],"2-23":["Torborg"],"2-24":["Mattias"],"2-25":["Vibeke"],"2-26":["Faste"],"2-27":["Lise"],"2-28":["Leander"],"2-29":["Hildur"],
-  "3-1":["Sverre"],"3-2":["Karl"],"3-3":["Gunvor"],"3-4":["Adrian"],"3-5":["Tore"],"3-6":["Fridtjof"],"3-7":["Felicitas"],"3-8":["Internasjonale kvinnedag"],"3-9":["Franziska"],"3-10":["Aleksander"],"3-11":["Rosina"],"3-12":["Gregorius"],"3-13":["Euphemia"],"3-14":["Fride","Mathilde"],"3-15":["Kristoffer"],"3-16":["Herbert"],"3-17":["Gertrud","Patrick"],"3-18":["Edvard"],"3-19":["Josef"],"3-20":["Jorunn"],"3-21":["Benedikt"],"3-22":["Lea"],"3-23":["Turid"],"3-24":["Kata"],"3-25":["Maria budskapsdag"],"3-26":["Emanuel"],"3-27":["Rupert"],"3-28":["Sivert"],"3-29":["Jonas"],"3-30":["Amund"],"3-31":["Eirik"],
-  "4-1":["Hugo"],"4-2":["Gudmund"],"4-3":["Ferdinand"],"4-4":["Isidor"],"4-5":["Irene"],"4-6":["Vilhelm"],"4-7":["Hektor"],"4-8":["Dionysius"],"4-9":["Valdemar"],"4-10":["Ezekias"],"4-11":["Leonid"],"4-12":["Julius"],"4-13":["Ida"],"4-14":["Tiburtius"],"4-15":["Olivia"],"4-16":["Bernt"],"4-17":["Rudolf"],"4-18":["Valborg"],"4-19":["Werner"],"4-20":["Hildur"],"4-21":["Anselm"],"4-22":["Axel"],"4-23":["Adalbert","Georg"],"4-24":["Fidelus"],"4-25":["Markus"],"4-26":["Klara","Klarissa"],"4-27":["Anastasia"],"4-28":["Teresia"],"4-29":["Rikard"],"4-30":["Valborgmesse"],
-  "5-1":["Arbeidernes dag"],"5-2":["Sigurd"],"5-3":["Åsmund"],"5-4":["Monica"],"5-5":["Gotthard"],"5-6":["Margareth"],"5-7":["Gunnhild"],"5-8":["Victor"],"5-9":["Brynhild"],"5-10":["Aase"],"5-11":["Mamertus"],"5-12":["Pankras"],"5-13":["Servatius"],"5-14":["Hallvard"],"5-15":["Sofia"],"5-16":["Brendan"],"5-17":["Grunnlovsdag"],"5-18":["Erik"],"5-19":["Yolanda"],"5-20":["Bernhard"],"5-21":["Konstantia"],"5-22":["Hemming"],"5-23":["Desideria"],"5-24":["Dagmar"],"5-25":["Bedas"],"5-26":["Filip"],"5-27":["Ludvig"],"5-28":["Ingeborg"],"5-29":["Maximinus"],"5-30":["Ferdinand"],"5-31":["Petronella"],
-  "6-1":["Justin"],"6-2":["Erasmus"],"6-3":["Olivia"],"6-4":["Quirinus"],"6-5":["Bonifasius"],"6-6":["Norbert"],"6-7":["Robert"],"6-8":["Medard"],"6-9":["Columba"],"6-10":["Bogumila"],"6-11":["Barnabas"],"6-12":["Eskil"],"6-13":["Antonius"],"6-14":["Basil"],"6-15":["Vitus"],"6-16":["Benno"],"6-17":["Botolf"],"6-18":["Edburga"],"6-19":["Gervasius"],"6-20":["Florentius"],"6-21":["Alban"],"6-22":["Paulinus"],"6-23":["Jonsokaften"],"6-24":["Sankthans"],"6-25":["Elise"],"6-26":["Johannes"],"6-27":["Cyril"],"6-28":["Leo"],"6-29":["Peter","Paul"],"6-30":["Herdis"],
-  "7-1":["Halvard"],"7-2":["Ulrika"],"7-3":["Tomas"],"7-4":["Ulrik"],"7-5":["Filia"],"7-6":["Gobert"],"7-7":["Kjeld"],"7-8":["Kilian"],"7-9":["Anatolia"],"7-10":["Knud"],"7-11":["Benedikt"],"7-12":["Eskil"],"7-13":["Hanna"],"7-14":["Ulfjord"],"7-15":["Svein"],"7-16":["Ruth"],"7-17":["Aleksis"],"7-18":["Fredrik"],"7-19":["Aurea"],"7-20":["Elias","Margareta"],"7-21":["Viktor"],"7-22":["Maria Magdalena"],"7-23":["Birgitta"],"7-24":["Kristina"],"7-25":["Kristoffer","Jakob"],"7-26":["Annelise"],"7-27":["Marta"],"7-28":["Samson"],"7-29":["Olav"],"7-30":["Sigrid"],"7-31":["Ignatius"],
-  "8-1":["Pernille"],"8-2":["Gustav"],"8-3":["Nikodemus"],"8-4":["Dominikus"],"8-5":["Oswald"],"8-6":["Sixtus"],"8-7":["Kjetil"],"8-8":["Dagny"],"8-9":["Roman"],"8-10":["Laurits"],"8-11":["Susanna"],"8-12":["Klara"],"8-13":["Hippolytus"],"8-14":["Eusebius"],"8-15":["Mariamesse"],"8-16":["Rochus"],"8-17":["Hyasint"],"8-18":["Helena"],"8-19":["Rufus"],"8-20":["Bernhard"],"8-21":["Privatus"],"8-22":["Sigfrid"],"8-23":["Rose"],"8-24":["Bartolomeus"],"8-25":["Ludvig"],"8-26":["Zefyrinus"],"8-27":["Monika"],"8-28":["Augustin"],"8-29":["Johannes"],"8-30":["Felix","Ragnhild"],"8-31":["Ragnhild"],
-  "9-1":["Gisle"],"9-2":["Ingerid"],"9-3":["Gregorius"],"9-4":["Rosalia"],"9-5":["Viktor"],"9-6":["Magnus"],"9-7":["Regina"],"9-8":["Marias fødsel"],"9-9":["Alf"],"9-10":["Nikolaus"],"9-11":["Protus"],"9-12":["Tobias"],"9-13":["Johan"],"9-14":["Hellig kors"],"9-15":["Roland"],"9-16":["Kornelius"],"9-17":["Lambert"],"9-18":["Thomas"],"9-19":["Januarius"],"9-20":["Eustakius"],"9-21":["Matteus"],"9-22":["Maurits"],"9-23":["Tekla"],"9-24":["Gerard"],"9-25":["Kleofas"],"9-26":["Justina"],"9-27":["Vinsent"],"9-28":["Venceslaus"],"9-29":["Mikael"],"9-30":["Hieronymus"],
-  "10-1":["Remigius"],"10-2":["Leif"],"10-3":["Kandida"],"10-4":["Frans"],"10-5":["Placidus"],"10-6":["Bruno"],"10-7":["Rosenkrans"],"10-8":["Birgitta"],"10-9":["Dionys"],"10-10":["Frans"],"10-11":["Aslak"],"10-12":["Wilfrid"],"10-13":["Gerard"],"10-14":["Kalixtus"],"10-15":["Teresa"],"10-16":["Gallus"],"10-17":["Hedvig"],"10-18":["Lukas"],"10-19":["Frigjøring"],"10-20":["Vendelin"],"10-21":["Ursula"],"10-22":["Kordula"],"10-23":["Severin"],"10-24":["Magnus"],"10-25":["Krispin"],"10-26":["Evaristus"],"10-27":["Sabina"],"10-28":["Simon","Judas"],"10-29":["Narcissus"],"10-30":["Halvard"],"10-31":["Wolfgang"],
-  "11-1":["Alle helgens dag"],"11-2":["Alle sjelers dag"],"11-3":["Hubert"],"11-4":["Karl"],"11-5":["Rikard"],"11-6":["Leonard"],"11-7":["Engelbrecht"],"11-8":["Godfred"],"11-9":["Teodor"],"11-10":["Leo"],"11-11":["Martin"],"11-12":["Jorun"],"11-13":["Brikt"],"11-14":["Serapion"],"11-15":["Albert"],"11-16":["Margrete"],"11-17":["Ansgard"],"11-18":["Aud"],"11-19":["Elisabeth"],"11-20":["Edmund"],"11-21":["Gelasio"],"11-22":["Cecilia"],"11-23":["Klemens"],"11-24":["Krisogon"],"11-25":["Katarina"],"11-26":["Konrad"],"11-27":["Virgil"],"11-28":["Arne"],"11-29":["Saturnin"],"11-30":["Andreas"],
-  "12-1":["Eligius"],"12-2":["Bibiana"],"12-3":["Frans"],"12-4":["Barbara"],"12-5":["Sabas"],"12-6":["Nikolaus"],"12-7":["Ambrosius"],"12-8":["Marias unnfangelse"],"12-9":["Leokadia"],"12-10":["Judith"],"12-11":["Damasus"],"12-12":["Johanna"],"12-13":["Lucia"],"12-14":["Johannes"],"12-15":["Nino"],"12-16":["Adelheid"],"12-17":["Lazar"],"12-18":["Gratian"],"12-19":["Nemesis"],"12-20":["Abraham"],"12-21":["Tomas"],"12-22":["Dagfinn"],"12-23":["Thorlak"],"12-24":["Julaften"],"12-25":["Juledag"],"12-26":["Stefan"],"12-27":["Johannes"],"12-28":["De uskyldige"],"12-29":["Tomas Becket"],"12-30":["Ragnhild"],"12-31":["Nyttårsaften"]
+  '01-01':'Nyttårsdag','01-06':'Hellig Tre Konger','01-13':'Hilarius','01-19':'Marius',
+  '01-20':'Fabian, Sebastian','01-25':'Paulus','01-29':'Varius',
+  '02-02':'Kyndelsmesse','02-05':'Agata','02-14':'Valentin','02-22':'Petter',
+  '03-01':'Åsmund','03-08':'Internasjonale kvinnedagen','03-12':'Gregorius',
+  '03-14':'Matilde','03-17':'Gertrude','03-19':'Josef','03-25':'Maria Bebudelsedag',
+  '04-01':'April fools','04-23':'Georg','04-25':'Markus',
+  '05-01':'Arbeidernes dag','05-17':'Grunnlovsdag','05-25':'Beda',
+  '06-07':'Robert','06-15':'Vitus','06-24':'Jonsok / Hans',
+  '07-04':'Ulrik','07-15':'Svein','07-20':'Elias','07-25':'Jakob',
+  '08-05':'Oskar','08-10':'Laurits','08-24':'Bartolomeus',
+  '09-08':'Maria fødselsdagen','09-14':'Helge kors','09-29':'Mikael',
+  '10-04':'Frans av Assisi','10-18':'Lukas','10-31':'Reformasjonsdagen',
+  '11-01':'Alle helgeners dag','11-11':'Mårten','11-25':'Katarina',
+  '12-06':'Nikolaus','12-13':'Lucia','12-24':'Adam og Eva','12-25':'Jul','12-26':'Stefanus',
+  '12-31':'Nyttårsaften'
 };
 
-// ── SOLAR CALCULATIONS ──
-function toRad(d){return d*Math.PI/180;}
-function toDeg(r){return r*180/Math.PI;}
+// ── HELPERS ──
+function pad(n){ return String(n).padStart(2,'0'); }
+function dateKey(d){ return `${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 
-function sunTime(date, rising) {
-  const D = Math.floor((Date.UTC(date.getFullYear(),date.getMonth(),date.getDate())-Date.UTC(date.getFullYear(),0,0))/86400000);
-  const lng = LON, lat = LAT;
-  const lnghour = lng/15;
-  const t = rising ? D + (6-lnghour)/24 : D + (18-lnghour)/24;
-  const M = (0.9856*t) - 3.289;
-  let L = M + (1.916*Math.sin(toRad(M))) + (0.020*Math.sin(toRad(2*M))) + 282.634;
-  L = ((L%360)+360)%360;
-  let RA = toDeg(Math.atan(0.91764*Math.tan(toRad(L))));
-  RA = ((RA%360)+360)%360;
-  const Lquad = Math.floor(L/90)*90;
-  const RAquad = Math.floor(RA/90)*90;
-  RA = (RA + (Lquad-RAquad))/15;
-  const sinDec = 0.39782*Math.sin(toRad(L));
-  const cosDec = Math.cos(Math.asin(sinDec));
-  const cosH = (-0.01454 - sinDec*Math.sin(toRad(lat)))/(cosDec*Math.cos(toRad(lat)));
-  if(cosH<-1||cosH>1) return null;
-  let H = rising ? 360-toDeg(Math.acos(cosH)) : toDeg(Math.acos(cosH));
-  H = H/15;
-  const T = H + RA - (0.06571*t) - 6.622;
-  let UT = ((T-lnghour)%24+24)%24;
-  // Convert to local time (Norway UTC+1 or UTC+2)
-  const offset = isDST(date) ? 2 : 1;
-  UT = (UT + offset + 24) % 24;
-  return UT;
+function weekNumber(d){
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay()||7));
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1)/7);
 }
 
-function isDST(date) {
-  const jan = new Date(date.getFullYear(),0,1);
-  const jul = new Date(date.getFullYear(),6,1);
-  return date.getTimezoneOffset() < Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+function daysInYear(d){
+  const start = new Date(d.getFullYear(),0,1);
+  return Math.round((d-start)/86400000)+1;
 }
 
-function fmtSunTime(h) {
-  if(h===null) return '--:--';
-  const hh = Math.floor(h);
-  const mm = Math.round((h-hh)*60);
-  return hh.toString().padStart(2,'0') + ':' + mm.toString().padStart(2,'0');
+function totalDaysInYear(y){
+  return ((y%4===0&&y%100!==0)||y%400===0)?366:365;
 }
 
-function sunDaylight(date) {
-  const rise = sunTime(date, true);
-  const set = sunTime(date, false);
-  if(rise===null||set===null) return 0;
-  return set - rise;
+function daysUntil(month, day){
+  const now = new Date();
+  let target = new Date(now.getFullYear(), month-1, day);
+  if(target <= now) target = new Date(now.getFullYear()+1, month-1, day);
+  return Math.ceil((target-now)/86400000);
 }
 
-// ── MOON PHASE ──
-function moonPhase(date) {
+// ── MOON ──
+function moonPhase(date){
   const known = new Date(2000,0,6);
-  const diff = (date-known)/(1000*60*60*24);
-  const cycle = 29.53059;
-  const phase = ((diff%cycle)+cycle)%cycle;
-  return phase;
+  const diff = (date - known) / 86400000;
+  return ((diff % 29.530588853) + 29.530588853) % 29.530588853;
 }
 
-function moonName(p) {
-  if(p<1.85) return 'Nymåne';
-  if(p<5.54) return 'Voksende måne';
-  if(p<9.22) return 'Halvmåne (voksende)';
-  if(p<12.91) return 'Nesten fullmåne';
-  if(p<16.61) return 'Fullmåne';
-  if(p<20.30) return 'Avtagende fullmåne';
-  if(p<23.99) return 'Halvmåne (avtagende)';
-  if(p<27.68) return 'Avtagende måne';
+function moonName(phase){
+  if(phase < 1.85)  return 'Nymåne';
+  if(phase < 7.38)  return 'Voksende halvmåne';
+  if(phase < 9.22)  return 'Første kvarter';
+  if(phase < 14.77) return 'Voksende måne';
+  if(phase < 16.61) return 'Fullmåne';
+  if(phase < 22.15) return 'Minkende måne';
+  if(phase < 23.99) return 'Siste kvarter';
+  if(phase < 29.53) return 'Minkende halvmåne';
   return 'Nymåne';
 }
 
-function drawMoon(svg, phase) {
-  const illumination = (1 - Math.cos(2*Math.PI*phase/29.53))/2;
-  const pct = Math.round(illumination*100);
-  svg.innerHTML = '';
-  const cx=18,cy=18,r=15;
-  const bg = document.createElementNS('http://www.w3.org/2000/svg','circle');
-  bg.setAttribute('cx',cx); bg.setAttribute('cy',cy); bg.setAttribute('r',r);
-  bg.setAttribute('fill','#ddd'); bg.setAttribute('stroke','#bbb'); bg.setAttribute('stroke-width','0.5');
-  svg.appendChild(bg);
+function drawMoon(svgEl, phase){
+  const size = 80, r = 32, cx = 40, cy = 40;
+  const illum = phase / 29.530588853;
+  const waxing = illum < 0.5;
+  const pct = waxing ? illum*2 : (illum-0.5)*2;
+  const rx = Math.abs(Math.cos(Math.PI * pct)) * r;
+  const dark = '#1a1814', light = '#f0ece3', rim = '#7a7060';
 
-  if(pct > 5) {
-    const lit = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    lit.setAttribute('cx',cx); lit.setAttribute('cy',cy); lit.setAttribute('r',r);
-    lit.setAttribute('fill','#111');
-    lit.setAttribute('clip-path','url(#moonclip)');
-    const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
-    const clip = document.createElementNS('http://www.w3.org/2000/svg','clipPath');
-    clip.setAttribute('id','moonclip');
-    const cr = document.createElementNS('http://www.w3.org/2000/svg','rect');
-    const waning = phase > 14.76;
-    if(waning) {
-      cr.setAttribute('x', cx - r + (1-illumination)*r*2);
-    } else {
-      cr.setAttribute('x', cx - r);
-    }
-    cr.setAttribute('y', cy - r - 1);
-    cr.setAttribute('width', illumination*r*2);
-    cr.setAttribute('height', r*2+2);
-    clip.appendChild(cr); defs.appendChild(clip); svg.appendChild(defs);
-    svg.appendChild(lit);
-  }
-  document.getElementById('r-mooninfo').textContent = pct + '% belyst';
-}
+  // background circle
+  const circle = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${illum<0.5?dark:light}" stroke="${rim}" stroke-width="1"/>`;
 
-// ── COUNTDOWN ──
-function daysUntil(month0, day) {
-  const now = new Date();
-  const y = now.getFullYear();
-  let target = new Date(y, month0, day);
-  if(target <= now) target = new Date(y+1, month0, day);
-  return Math.ceil((target - now)/(1000*60*60*24));
-}
-
-// ── WEEK NUMBER ──
-function getWeekNum(d) {
-  const date = new Date(d.getTime());
-  date.setHours(0,0,0,0);
-  date.setDate(date.getDate()+3-(date.getDay()+6)%7);
-  const week1 = new Date(date.getFullYear(),0,4);
-  return 1+Math.round(((date.getTime()-week1.getTime())/86400000-3+(week1.getDay()+6)%7)/7);
-}
-
-// ── WEATHER ──
-function wxIcon(code, svgEl) {
-  svgEl.innerHTML = '';
-  const s = code || 'cloudy';
-  const add = (el,attrs,parent) => {
-    const e = document.createElementNS('http://www.w3.org/2000/svg',el);
-    for(const [k,v] of Object.entries(attrs)) e.setAttribute(k,v);
-    (parent||svgEl).appendChild(e); return e;
-  };
-
-  if(s.includes('clearsky') || s.includes('fair')) {
-    add('circle',{cx:26,cy:26,r:14,fill:'none',stroke:'#111','stroke-width':'2'});
-    for(let i=0;i<8;i++){
-      const a=toRad(i*45), x1=26+18*Math.cos(a), y1=26+18*Math.sin(a), x2=26+22*Math.cos(a), y2=26+22*Math.sin(a);
-      add('line',{x1,y1,x2,y2,stroke:'#111','stroke-width':'1.5'});
-    }
-  } else if(s.includes('snow')) {
-    for(let i=0;i<6;i++){
-      const a=toRad(i*60);
-      add('line',{x1:26,y1:26,x2:26+16*Math.cos(a),y2:26+16*Math.sin(a),stroke:'#111','stroke-width':'2'});
-    }
-    add('circle',{cx:26,cy:26,r:3,fill:'#111'});
-  } else if(s.includes('rain') || s.includes('shower') || s.includes('sleet')) {
-    add('path',{d:'M16 24 Q18 12 26 14 Q28 6 36 10 Q44 10 42 24 Z',fill:'none',stroke:'#111','stroke-width':'1.5'});
-    add('line',{x1:20,y1:32,x2:18,y2:40,stroke:'#111','stroke-width':'1.5'});
-    add('line',{x1:26,y1:32,x2:24,y2:40,stroke:'#111','stroke-width':'1.5'});
-    add('line',{x1:32,y1:32,x2:30,y2:40,stroke:'#111','stroke-width':'1.5'});
-  } else if(s.includes('thunder')) {
-    add('path',{d:'M16 24 Q18 12 26 14 Q28 6 36 10 Q44 10 42 24 Z',fill:'none',stroke:'#111','stroke-width':'1.5'});
-    add('path',{d:'M28 28 L23 36 L27 36 L22 46 L32 33 L27 33 Z',fill:'#111'});
-  } else if(s.includes('fog')) {
-    for(let i=0;i<4;i++) add('line',{x1:10,y1:16+i*8,x2:42,y2:16+i*8,stroke:'#111','stroke-width':'1.5','stroke-linecap':'round',opacity:1-i*0.2});
+  // terminator shape
+  let path;
+  if(illum < 0.02 || illum > 0.98){
+    path = '';
+  } else if(waxing){
+    // left dark, right lit
+    const sweep1 = 1, sweep2 = pct < 0.5 ? 0 : 1;
+    path = `<path d="M ${cx} ${cy-r} A ${r} ${r} 0 0 1 ${cx} ${cy+r} A ${rx} ${r} 0 0 ${sweep2} ${cx} ${cy-r} Z" fill="${light}"/>`;
   } else {
-    add('path',{d:'M14 32 Q16 20 24 22 Q26 14 34 18 Q42 18 40 32 Z',fill:'none',stroke:'#111','stroke-width':'1.5'});
-    add('path',{d:'M8 32 Q10 24 16 25 Q18 20 22 22',fill:'none',stroke:'#bbb','stroke-width':'1.5'});
+    const sweep2 = pct < 0.5 ? 1 : 0;
+    path = `<path d="M ${cx} ${cy-r} A ${r} ${r} 0 0 0 ${cx} ${cy+r} A ${rx} ${r} 0 0 ${sweep2} ${cx} ${cy-r} Z" fill="${dark}"/>`;
+  }
+
+  svgEl.innerHTML = circle + path;
+}
+
+// ── SUN ORB ──
+function drawSun(container, isDay){
+  if(isDay){
+    container.innerHTML = `
+      <svg class="sun-svg" viewBox="0 0 110 110">
+        <!-- rays -->
+        <g stroke="#d4874a" stroke-width="2.5" stroke-linecap="round" opacity="0.5">
+          <line x1="55" y1="8" x2="55" y2="18"/>
+          <line x1="55" y1="92" x2="55" y2="102"/>
+          <line x1="8" y1="55" x2="18" y2="55"/>
+          <line x1="92" y1="55" x2="102" y2="55"/>
+          <line x1="22" y1="22" x2="29" y2="29"/>
+          <line x1="81" y1="81" x2="88" y2="88"/>
+          <line x1="88" y1="22" x2="81" y2="29"/>
+          <line x1="22" y1="88" x2="29" y2="81"/>
+        </g>
+        <!-- glow -->
+        <circle cx="55" cy="55" r="34" fill="#d4874a" opacity="0.15"/>
+        <!-- body -->
+        <circle cx="55" cy="55" r="26" fill="#d4874a"/>
+        <circle cx="55" cy="55" r="26" fill="url(#sunGrad)"/>
+        <defs>
+          <radialGradient id="sunGrad" cx="40%" cy="35%">
+            <stop offset="0%" stop-color="#f5c07a"/>
+            <stop offset="100%" stop-color="#c0692a"/>
+          </radialGradient>
+        </defs>
+      </svg>`;
+  } else {
+    container.innerHTML = `
+      <svg class="moon-svg" viewBox="0 0 80 80">
+        <circle cx="40" cy="40" r="28" fill="#c8bfae"/>
+        <circle cx="40" cy="40" r="28" fill="url(#moonGrad)"/>
+        <defs>
+          <radialGradient id="moonGrad" cx="35%" cy="30%">
+            <stop offset="0%" stop-color="#e8e0d0"/>
+            <stop offset="100%" stop-color="#9a8f7a"/>
+          </radialGradient>
+        </defs>
+        <!-- craters -->
+        <circle cx="32" cy="36" r="4" fill="rgba(0,0,0,0.08)"/>
+        <circle cx="48" cy="28" r="2.5" fill="rgba(0,0,0,0.07)"/>
+        <circle cx="44" cy="50" r="3" fill="rgba(0,0,0,0.06)"/>
+      </svg>`;
   }
 }
 
-function wxDesc(code) {
-  const map = {
-    clearsky:'Klarvær', fair:'Lettskyet', partlycloudy:'Delvis skyet',
-    cloudy:'Overskyet', fog:'Tåke', lightrain:'Lett regn', rain:'Regn',
-    heavyrain:'Kraftig regn', lightsleet:'Lett sludd', sleet:'Sludd',
-    lightsnow:'Lett snø', snow:'Snø', rainshowers_day:'Regnbyger',
-    snowshowers_day:'Snøbyger', thunder:'Tordenvær',
-    lightrainshowers_day:'Lette regnbyger', heavyrainshowers_day:'Kraftige regnbyger'
-  };
-  const base = (code||'').replace(/_day|_night|_polartwilight/g,'');
-  return map[base] || base.replace(/_/g,' ');
+// ── WEATHER ICONS (SVG inline) ──
+function weatherIcon(code, size=56){
+  // simplified icon map
+  const S = size;
+  const sun = `<circle cx="${S/2}" cy="${S/2}" r="${S*0.23}" fill="#d4874a"/>`;
+  const cloud = (x,y,s) => `<ellipse cx="${x}" cy="${y}" rx="${s*1.4}" ry="${s*0.9}" fill="#c8c0b0"/><ellipse cx="${x-s*0.6}" cy="${y+s*0.3}" rx="${s}" ry="${s*0.7}" fill="#c8c0b0"/>`;
+  const rain = (x,y,s) => `<line x1="${x}" y1="${y}" x2="${x-s*0.2}" y2="${y+s*0.8}" stroke="#4a6fa5" stroke-width="1.5" stroke-linecap="round"/>`;
+
+  if(!code) return `<circle cx="${S/2}" cy="${S/2}" r="${S*0.3}" fill="#d4874a" opacity="0.5"/>`;
+
+  const c = parseInt(code);
+  const svg = (content) => `<svg viewBox="0 0 ${S} ${S}" width="${S}" height="${S}">${content}</svg>`;
+
+  if(c===1) return svg(sun); // clear
+  if(c===2) return svg(sun + cloud(S*0.62, S*0.55, S*0.16)); // partly cloudy
+  if(c===3) return svg(cloud(S*0.5, S*0.5, S*0.2) + cloud(S*0.45, S*0.52, S*0.18)); // cloudy
+  if(c>=40&&c<=49) return svg(cloud(S*0.5,S*0.38,S*0.18) + rain(S*0.35,S*0.62,S*0.12) + rain(S*0.5,S*0.62,S*0.12) + rain(S*0.65,S*0.62,S*0.12));
+  if(c>=70&&c<=79) return svg(`<circle cx="${S*0.5}" cy="${S*0.45}" r="${S*0.2}" fill="#e0dbd0"/><text x="${S*0.5}" y="${S*0.78}" text-anchor="middle" font-size="${S*0.22}" fill="#7a7060">❄</text>`);
+  // default: cloud
+  return svg(cloud(S*0.5, S*0.5, S*0.2));
 }
 
-async function fetchWeather() {
+// ── YR.NO WEATHER ──
+async function fetchWeather(){
   try {
     const r = await fetch(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${LAT}&lon=${LON}`,
-      {headers:{'User-Agent':'oslo-almanakk/1.0 github.com/eilifursinreed/almanakk'}});
-    const d = await r.json();
-    const ts = d.properties.timeseries;
-    const now = ts[0];
-    const inst = now.data.instant.details;
-    const next = now.data.next_1_hours || now.data.next_6_hours;
-    const sym = next ? next.summary.symbol_code : 'cloudy';
-    const temp = Math.round(inst.air_temperature);
-    const wind = Math.round(inst.wind_speed);
-    const humid = Math.round(inst.relative_humidity);
-    const precip = next ? (next.details.precipitation_amount||0).toFixed(1) : '0';
+      { headers: { 'User-Agent': 'almanakk/1.0 github.com/salixogburot/almanakk' } });
+    const data = await r.json();
+    const series = data.properties.timeseries;
+    const now = series[0];
+    const instant = now.data.instant.details;
+    const next1h = now.data.next_1_hours || now.data.next_6_hours || {};
 
-    document.getElementById('c-wxtemp').textContent = temp + '°';
-    document.getElementById('c-wxdesc').textContent = wxDesc(sym);
-    document.getElementById('c-wxmeta').innerHTML =
-      `Vind ${wind} m/s &nbsp;·&nbsp; Fukt ${humid}%<br>Nedbør ${precip} mm`;
-    wxIcon(sym, document.getElementById('c-wxsvg'));
+    const temp = Math.round(instant.air_temperature);
+    const feels = Math.round(instant.air_temperature - Math.max(0,(13.12 + 0.6215*instant.air_temperature - 11.37*Math.pow(instant.wind_speed,0.16) + 0.3965*instant.air_temperature*Math.pow(instant.wind_speed,0.16))-instant.air_temperature));
+    document.getElementById('temp-now').textContent = temp;
+    document.getElementById('feels-like').textContent = feels;
 
-    const DAYS_FC = ['Søn','Man','Tir','Ons','Tor','Fre','Lør'];
-    const forecast=[]; const seenDays=new Set();
-    for(const t of ts) {
-      const dt = new Date(t.time);
-      const dk = dt.toDateString();
-      if(dt <= new Date()) continue;
-      if(seenDays.has(dk)) continue;
-      if(dt.getHours() !== 12) continue;
-      seenDays.add(dk);
-      const nx = t.data.next_6_hours || t.data.next_1_hours;
-      if(!nx) continue;
-      const miniSvg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-      miniSvg.setAttribute('width','24'); miniSvg.setAttribute('height','24');
-      miniSvg.setAttribute('viewBox','0 0 52 52');
-      miniSvg.classList.add('fc-icon');
-      wxIcon(nx.summary.symbol_code, miniSvg);
-      forecast.push({
-        day: DAYS_FC[dt.getDay()],
-        svg: miniSvg,
-        hi: Math.round(nx.details.air_temperature_max || t.data.instant.details.air_temperature),
-        lo: Math.round(nx.details.air_temperature_min || t.data.instant.details.air_temperature)
-      });
-      if(forecast.length>=4) break;
+    if(next1h.summary){
+      const code = next1h.summary.symbol_code;
+      document.getElementById('main-weather-icon').outerHTML = weatherIcon(getSymbolCode(code), 56);
+      document.getElementById('weather-desc').textContent = describeWeather(code);
     }
 
-    const fcEl = document.getElementById('c-forecast');
-    fcEl.innerHTML = '';
-    for(const f of forecast) {
-      const cell = document.createElement('div');
-      cell.className = 'fc-cell';
-      cell.innerHTML = `<div class="fc-day">${f.day}</div>`;
-      cell.appendChild(f.svg);
-      cell.innerHTML += `<div class="fc-hi">${f.hi}°</div><div class="fc-lo">${f.lo}°</div>`;
-      fcEl.appendChild(cell);
+    // Sunrise/sunset via locationforecast - use hardcoded Oslo times for simplicity, replaced by sun calc
+    fetchSunTimes();
+
+    // Forecast: next 4 days at noon
+    const days = [];
+    const seen = new Set();
+    for(const s of series){
+      const t = new Date(s.time);
+      const key = `${t.getDate()}-${t.getMonth()}`;
+      const h = t.getHours();
+      if(h===12 && !seen.has(key) && days.length < 4){
+        seen.add(key);
+        const d6 = s.data.next_6_hours || s.data.next_1_hours || {};
+        days.push({
+          name: DAYS_S[t.getDay()],
+          code: d6.summary ? d6.summary.symbol_code : null,
+          max: Math.round(d6.details ? d6.details.air_temperature_max || s.data.instant.details.air_temperature : s.data.instant.details.air_temperature),
+          min: Math.round(d6.details ? d6.details.air_temperature_min || s.data.instant.details.air_temperature : s.data.instant.details.air_temperature),
+        });
+      }
     }
-  } catch(e) {
-    document.getElementById('c-wxdesc').textContent = 'Kunne ikke hente vær';
+
+    const fc = document.getElementById('forecast-row');
+    fc.innerHTML = days.map(d => `
+      <div class="forecast-day">
+        <span class="fc-name">${d.name}</span>
+        ${weatherIcon(getSymbolCode(d.code), 28)}
+        <span class="fc-temp">${d.max}° <span class="lo">${d.min}°</span></span>
+      </div>`).join('');
+
+  } catch(e){
+    document.getElementById('weather-desc').textContent = 'Ingen vær';
   }
+}
+
+function getSymbolCode(sym){
+  if(!sym) return null;
+  const map = {
+    clearsky: 1, fair: 2, partlycloudy: 2, cloudy: 3,
+    lightrain: 46, rain: 41, heavyrain: 45,
+    lightsnow: 70, snow: 71, heavysnow: 73,
+    fog: 15, thunder: 6
+  };
+  for(const k of Object.keys(map)){
+    if(sym.includes(k)) return map[k];
+  }
+  return 3;
+}
+
+function describeWeather(code){
+  if(!code) return '';
+  if(code.includes('clearsky')) return 'Klarvær';
+  if(code.includes('fair')) return 'Pent vær';
+  if(code.includes('partlycloudy')) return 'Delvis skyet';
+  if(code.includes('cloudy')) return 'Overskyet';
+  if(code.includes('lightrain')) return 'Lett regn';
+  if(code.includes('rain')) return 'Regn';
+  if(code.includes('snow')) return 'Snø';
+  if(code.includes('fog')) return 'Tåke';
+  if(code.includes('thunder')) return 'Torden';
+  return code.replace(/_/g,' ');
+}
+
+// ── SUNRISE/SUNSET (formula) ──
+function fetchSunTimes(){
+  const now = new Date();
+  const {rise, set} = sunriseSunset(now, LAT, LON);
+  const yesterday = new Date(now); yesterday.setDate(yesterday.getDate()-1);
+  const {rise: yr2, set: ys2} = sunriseSunset(yesterday, LAT, LON);
+
+  const todayLen = set-rise;
+  const yestLen = (sunriseSunset(yesterday,LAT,LON).set - sunriseSunset(yesterday,LAT,LON).rise);
+  const diffMin = Math.round((todayLen - yestLen)/60000);
+  const sign = diffMin >= 0 ? '+' : '';
+
+  document.getElementById('sunrise-time').textContent = fmtTime(rise);
+  document.getElementById('sunset-time').textContent = fmtTime(set);
+  document.getElementById('daylight-diff').textContent = `${sign}${diffMin} min`;
+
+  const isDay = now >= rise && now <= set;
+  drawSun(document.getElementById('orb-wrap'), isDay);
+}
+
+function sunriseSunset(date, lat, lon){
+  const rad = Math.PI/180;
+  const doy = daysInYear(date);
+  const B = 360/365 * (doy-81) * rad;
+  const eot = 9.87*Math.sin(2*B) - 7.53*Math.cos(B) - 1.5*Math.sin(B);
+  const lstm = 15 * Math.round(lon/15);
+  const tc = 4*(lon-lstm) + eot;
+  const decl = 23.45 * Math.sin(rad*360/365*(doy-81)) * rad;
+  const latR = lat * rad;
+  const ha = Math.acos(-Math.tan(latR)*Math.tan(decl)) / rad;
+  const noon = 12 - tc/60;
+  const riseH = noon - ha/15;
+  const setH  = noon + ha/15;
+  const riseDate = new Date(date); riseDate.setHours(Math.floor(riseH), Math.round((riseH%1)*60), 0);
+  const setDate  = new Date(date); setDate.setHours(Math.floor(setH), Math.round((setH%1)*60), 0);
+  return { rise: riseDate, set: setDate };
+}
+
+function fmtTime(d){ return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+
+// ── YELLOWSTONE ──
+async function fetchYellowstone(){
+  const ysBox = document.getElementById('yellowstone-box');
+  const ysStatus = document.getElementById('ys-status');
+  const ysDetail = document.getElementById('ys-detail');
+  try {
+    const r = await fetch('https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&latitude=44.4280&longitude=-110.5885&maxradius=0.5&minmagnitude=1.0&limit=3&orderby=time');
+    const data = await r.json();
+    const quakes = data.features;
+    if(!quakes || quakes.length === 0){
+      ysStatus.innerHTML = '<span class="ys-dot"></span> Rolig';
+      ysDetail.textContent = 'Ingen skjelv siste dager';
+    } else {
+      const q = quakes[0];
+      const mag = q.properties.mag.toFixed(1);
+      const place = q.properties.place;
+      const ago = msAgo(q.properties.time);
+      const dot = mag >= 3 ? 'active' : '';
+      ysStatus.innerHTML = `<span class="ys-dot ${dot}"></span> M${mag}`;
+      ysDetail.textContent = `${ago} — ${quakes.length} skjelv nylig`;
+    }
+  } catch(e){
+    ysStatus.innerHTML = '<span class="ys-dot"></span> Utilgjengelig';
+    ysDetail.textContent = '';
+  }
+}
+
+function msAgo(ts){
+  const ms = Date.now() - ts;
+  const m = Math.floor(ms/60000);
+  if(m < 60) return `${m} min siden`;
+  const h = Math.floor(m/60);
+  if(h < 24) return `${h} t siden`;
+  return `${Math.floor(h/24)} d siden`;
 }
 
 // ── BIRTHDAYS ──
-async function fetchBirthdays(dateKey) {
+async function fetchBirthdays(key){
   try {
     const r = await fetch('data/birthdays.json');
     const data = await r.json();
-    const todays = data[dateKey] || [];
-    const el = document.getElementById('l-birthdays');
-    if(todays.length === 0) {
-      el.innerHTML = '<div class="bday-info" style="font-style:italic">Ingen i dag</div>';
-      return;
+    const bdays = data[key];
+    if(bdays && bdays.length){
+      document.getElementById('birthday-badge').textContent =
+        '🎂 ' + bdays.map(b=>b.navn).join(', ');
     }
-    el.innerHTML = todays.map(b => `
-      <div class="bday-item">
-        <div class="bday-name${b.privat?' privat':''}">${b.navn}</div>
-        <div class="bday-info">${b.info}</div>
-      </div>`).join('');
-  } catch(e) {
-    document.getElementById('l-birthdays').innerHTML =
-      '<div class="bday-info">birthdays.json ikke funnet</div>';
-  }
+  } catch(e){}
 }
 
-// ── MAIN INIT ──
-function init() {
+// ── INIT ──
+function init(){
   const now = new Date();
-  const mm = now.getMonth()+1, dd = now.getDate();
-  const dateKey = String(mm).padStart(2,'0') + '-' + String(dd).padStart(2,'0');
+  const key = dateKey(now);
 
   // Date
-  document.getElementById('l-daynum').textContent = dd;
-  document.getElementById('l-dayname').textContent = DAYS[now.getDay()];
-  document.getElementById('l-monthyear').textContent = MONTHS[now.getMonth()] + ' · ' + now.getFullYear();
-  document.getElementById('c-datestr').textContent = DAYS[now.getDay()] + ' ' + dd + '. ' + MONTHS[now.getMonth()] + ' ' + now.getFullYear();
+  document.getElementById('date-day').textContent = now.getDate();
+  document.getElementById('date-month').textContent = MONTHS[now.getMonth()] + ' ' + now.getFullYear();
+  document.getElementById('date-weekday').textContent = DAYS[now.getDay()];
 
   // Nameday
-  const nd = NAMEDAYS[`${mm}-${dd}`] || ['—'];
-  document.getElementById('l-nameday').textContent = nd.join(', ');
-
-  // Sun
-  const rise = sunTime(now, true);
-  const set = sunTime(now, false);
-  document.getElementById('l-sunrise').textContent = fmtSunTime(rise);
-  document.getElementById('l-sunset').textContent = fmtSunTime(set);
-
-  const dlToday = sunDaylight(now);
-  const yesterday = new Date(now); yesterday.setDate(dd-1);
-  const dlYest = sunDaylight(yesterday);
-  const diffMin = dlToday - dlYest;
-  const diffSec = Math.round(Math.abs(diffMin)*3600);
-  const diffM = Math.floor(diffSec/60), diffS = diffSec%60;
-  const hh = Math.floor(dlToday), mm2 = Math.round((dlToday-hh)*60);
-  document.getElementById('l-dagslys').innerHTML =
-    `Dagslys: <strong>${hh}t ${mm2}m</strong>`;
-  const diffEl = document.getElementById('l-soldiff');
-  if(diffMin >= 0) {
-    diffEl.className = 'sol-diff-pos';
-    diffEl.textContent = `+${diffM}m ${diffS}s mer enn i går`;
-  } else {
-    diffEl.className = 'sol-diff-neg';
-    diffEl.textContent = `–${diffM}m ${diffS}s mindre enn i går`;
-  }
-
-  // Countdowns
-  document.getElementById('c-cd-fride').textContent = daysUntil(FRIDE.month, FRIDE.day);
-  document.getElementById('c-cd-jul').textContent = daysUntil(11, 24);
-
-  // Year progress
-  const start = new Date(now.getFullYear(),0,1);
-  const end = new Date(now.getFullYear()+1,0,1);
-  const pct = Math.round(((now-start)/(end-start))*100);
-  document.getElementById('c-yrbar').style.width = pct+'%';
-  document.getElementById('c-yrpct').textContent = pct+'%';
-
-  // Week
-  const wn = getWeekNum(now);
-  document.getElementById('r-weeknum').textContent = wn;
-  document.getElementById('r-weekinfo').textContent =
-    'av 52 · ' + MONTHS[now.getMonth()];
-
-  // Week mini calendar
-  const weekEl = document.getElementById('r-week');
-  weekEl.innerHTML = '';
-  const monday = new Date(now);
-  monday.setDate(now.getDate() - (now.getDay()+6)%7);
-  for(let i=0;i<7;i++) {
-    const d = new Date(monday); d.setDate(monday.getDate()+i);
-    const isToday = d.toDateString()===now.toDateString();
-    const row = document.createElement('div');
-    row.className = 'week-row' + (isToday?' today':'');
-    row.innerHTML = `<span class="week-dayname">${DAYS_S[(d.getDay())]}</span><span class="week-date">${d.getDate()}</span>`;
-    weekEl.appendChild(row);
-  }
+  const nd = NAMEDAYS[key];
+  document.getElementById('nameday-names').textContent = nd || '—';
+  if(!nd) document.getElementById('nameday-block').style.opacity = '0.5';
 
   // Moon
   const phase = moonPhase(now);
-  document.getElementById('r-moonname').textContent = moonName(phase);
-  drawMoon(document.getElementById('r-moonsvg'), phase);
+  document.getElementById('moon-name').textContent = moonName(phase);
+  drawMoon(document.getElementById('moon-svg'), phase);
+
+  // Countdowns
+  const cdList = document.getElementById('countdown-list');
+  cdList.innerHTML = COUNTDOWNS.map(c => {
+    const days = daysUntil(c.month, c.day);
+    return `<div class="countdown-item">
+      <span class="cd-label">${c.label}</span>
+      <span class="cd-value">${days}<span class="cd-unit"> dager</span></span>
+    </div>`;
+  }).join('');
+
+  // Week calendar
+  const dow = now.getDay(); // 0=sun
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - ((dow+6)%7));
+  const wkEl = document.getElementById('week-cal');
+  wkEl.innerHTML = '';
+  for(let i=0; i<7; i++){
+    const d = new Date(monday); d.setDate(monday.getDate()+i);
+    const isToday = d.toDateString() === now.toDateString();
+    const div = document.createElement('div');
+    div.className = 'wk-day' + (isToday?' today':'');
+    div.innerHTML = `<span class="wk-name">${DAYS_S[d.getDay()]}</span><span class="wk-num">${d.getDate()}</span>`;
+    wkEl.appendChild(div);
+  }
+
+  // Week number
+  document.getElementById('week-num').textContent = weekNumber(now);
+
+  // Year progress
+  const pct = Math.round(daysInYear(now)/totalDaysInYear(now.getFullYear())*100);
+  document.getElementById('year-pct').textContent = pct + '%';
+  document.getElementById('yr-bar').style.width = pct + '%';
 
   // Updated
-  document.getElementById('f-updated').textContent =
-    'oppdatert ' + now.toLocaleTimeString('no-NO',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('updated').textContent =
+    'oppdatert ' + fmtTime(now);
 
   // Async
   fetchWeather();
-  fetchBirthdays(dateKey);
+  fetchYellowstone();
+  fetchBirthdays(key);
 }
 
 init();
