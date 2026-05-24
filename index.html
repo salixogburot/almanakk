@@ -214,6 +214,17 @@
     font-weight: 500;
   }
 
+  /* Combined temp + precip chart */
+  .weather-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .weather-chart svg {
+    display: block;
+    overflow: visible;
+  }
+
   /* 4-day forecast */
   .forecast {
     display: grid;
@@ -510,6 +521,10 @@
       </div>
     </div>
 
+    <div class="weather-chart">
+      <svg id="wx-chart" width="100%" height="90" viewBox="0 0 420 90" preserveAspectRatio="none"></svg>
+    </div>
+
     <div class="forecast" id="forecast-row">
       <!-- filled by JS -->
     </div>
@@ -758,7 +773,8 @@ async function fetchWeather(){
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}`
       + `&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m`
-      + `&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset`
+      + `&hourly=precipitation,temperature_2m`
+      + `&daily=weather_code,temperature_2m_max,temperature_2m_min`
       + `&timezone=Europe%2FOslo&forecast_days=5`;
 
     const r = await fetch(url);
@@ -776,32 +792,19 @@ async function fetchWeather(){
     const iconEl = document.getElementById('main-weather-icon');
     if(iconEl) iconEl.outerHTML = weatherIcon(info.icon, 56);
 
-    // Sunrise/sunset from API (accurate, already in local time)
-    const rise = new Date(daily.sunrise[0]);
-    const set  = new Date(daily.sunset[0]);
-    const riseYest = new Date(daily.sunrise[0]); // fallback – use today-1 calc for diff
-    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
-    const {rise: ry, set: sy} = sunriseSunsetCalc(yesterday, LAT, LON);
-    const todayLen = set - rise;
-    const yestLen  = sy - ry;
-    const diffMin  = Math.round((todayLen - yestLen) / 60000);
-    const sign     = diffMin >= 0 ? '+' : '';
+    // Sunrise/sunset handled separately by met.no API
+    fetchSunTimesCalc();
 
-    document.getElementById('sunrise-time').textContent = fmtTime(rise);
-    document.getElementById('sunset-time').textContent  = fmtTime(set);
-    document.getElementById('daylight-diff').textContent = `${sign}${diffMin} min`;
-
-    const now = new Date();
-    const isDay = now >= rise && now <= set;
-    drawSun(document.getElementById('orb-wrap'), isDay);
+    // Draw combined weather chart
+    if(data.hourly) drawWeatherChart(data.hourly);
 
     // 4-day forecast (skip today = index 0)
     const fc = document.getElementById('forecast-row');
-    fc.innerHTML = daily.time.slice(1,5).map((dateStr, i) => {
+    fc.innerHTML = daily.time.slice(1, 5).map((dateStr, i) => {
       const d = new Date(dateStr);
-      const fi = wmoInfo(daily.weather_code[i+1]);
-      const max = Math.round(daily.temperature_2m_max[i+1]);
-      const min = Math.round(daily.temperature_2m_min[i+1]);
+      const fi = wmoInfo(daily.weather_code[i + 1]);
+      const max = Math.round(daily.temperature_2m_max[i + 1]);
+      const min = Math.round(daily.temperature_2m_min[i + 1]);
       return `<div class="forecast-day">
         <span class="fc-name">${DAYS_S[d.getDay()]}</span>
         ${weatherIcon(fi.icon, 28)}
@@ -817,38 +820,166 @@ async function fetchWeather(){
   }
 }
 
-// Fallback: calculate sunrise/sunset mathematically
-function fetchSunTimesCalc(){
+// ── COMBINED WEATHER CHART (temp line + precip bars) ──
+function drawWeatherChart(hourly){
+  const svg = document.getElementById('wx-chart');
+  if(!svg) return;
+
+  const W = 420, H = 90;
+  const padL = 28, padR = 8, padT = 10, padB = 18;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+  const HOURS = 24;
+
+  // Find start index (current hour)
   const now = new Date();
-  const {rise, set} = sunriseSunsetCalc(now, LAT, LON);
-  const yesterday = new Date(now); yesterday.setDate(yesterday.getDate()-1);
-  const {rise: ry, set: sy} = sunriseSunsetCalc(yesterday, LAT, LON);
-  const diffMin = Math.round(((set-rise)-(sy-ry))/60000);
-  const sign = diffMin >= 0 ? '+' : '';
-  document.getElementById('sunrise-time').textContent = fmtTime(rise);
-  document.getElementById('sunset-time').textContent  = fmtTime(set);
-  document.getElementById('daylight-diff').textContent = `${sign}${diffMin} min`;
-  drawSun(document.getElementById('orb-wrap'), now >= rise && now <= set);
+  let startIdx = 0;
+  for(let i = 0; i < hourly.time.length; i++){
+    const t = new Date(hourly.time[i]);
+    if(t >= now){ startIdx = i; break; }
+  }
+
+  const temps  = hourly.temperature_2m.slice(startIdx, startIdx + HOURS);
+  const precip = hourly.precipitation.slice(startIdx, startIdx + HOURS);
+  const times  = hourly.time.slice(startIdx, startIdx + HOURS);
+
+  const minT = Math.floor(Math.min(...temps)) - 1;
+  const maxT = Math.ceil(Math.max(...temps))  + 1;
+  const maxP = Math.max(...precip, 1); // at least 1mm scale
+
+  const xOf  = i => padL + (i / (HOURS - 1)) * chartW;
+  const yOfT = t => padT + (1 - (t - minT) / (maxT - minT)) * chartH;
+  const barW = chartW / HOURS * 0.65;
+
+  let out = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"
+    style="width:100%;height:90px;display:block;overflow:visible">
+    <defs>
+      <linearGradient id="tempGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#c0392b" stop-opacity="0.15"/>
+        <stop offset="100%" stop-color="#c0392b" stop-opacity="0"/>
+      </linearGradient>
+    </defs>`;
+
+  // Grid lines + temp axis labels (left)
+  const tempTicks = 3;
+  for(let i = 0; i <= tempTicks; i++){
+    const t = minT + (maxT - minT) * (i / tempTicks);
+    const y = yOfT(t);
+    out += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}"
+      stroke="#1a1814" stroke-opacity="0.07" stroke-width="0.5"/>`;
+    out += `<text x="${padL - 3}" y="${y + 3}" text-anchor="end"
+      font-size="7" fill="#7a7060" font-family="DM Sans,sans-serif">${Math.round(t)}°</text>`;
+  }
+
+  // Precipitation bars (behind temp line)
+  precip.forEach((val, i) => {
+    if(val <= 0) return;
+    const x = xOf(i) - barW / 2;
+    const barH2 = (val / maxP) * chartH * 0.45; // max 45% of chart height
+    const y = padT + chartH - barH2;
+    const isNow = i === 0;
+    out += `<rect x="${x}" y="${y}" width="${barW}" height="${barH2}"
+      rx="1.5"
+      fill="${isNow ? '#d4874a' : '#4a6fa5'}"
+      opacity="${val > 0.5 ? 0.75 : 0.45}"/>`;
+  });
+
+  // Temperature area fill
+  const areaPoints = temps.map((t, i) => `${xOf(i)},${yOfT(t)}`).join(' ');
+  const firstX = xOf(0), lastX = xOf(HOURS - 1);
+  const baseY  = padT + chartH;
+  out += `<polygon points="${firstX},${baseY} ${areaPoints} ${lastX},${baseY}"
+    fill="url(#tempGrad)"/>`;
+
+  // Temperature line
+  const linePts = temps.map((t, i) => `${i === 0 ? 'M' : 'L'}${xOf(i)},${yOfT(t)}`).join(' ');
+  out += `<path d="${linePts}" fill="none" stroke="#c0392b" stroke-width="1.8"
+    stroke-linejoin="round" stroke-linecap="round"/>`;
+
+  // Now-line
+  out += `<line x1="${xOf(0)}" y1="${padT}" x2="${xOf(0)}" y2="${padT + chartH}"
+    stroke="#d4874a" stroke-width="1" stroke-opacity="0.6" stroke-dasharray="2,2"/>`;
+
+  // Time axis labels every 6h
+  for(let i = 0; i < HOURS; i += 6){
+    const t = new Date(times[i]);
+    const x = xOf(i);
+    const isNewDay = t.getHours() === 0;
+    if(isNewDay){
+      out += `<line x1="${x}" y1="${padT}" x2="${x}" y2="${padT + chartH}"
+        stroke="#1a1814" stroke-opacity="0.12" stroke-width="0.5"/>`;
+      out += `<text x="${x}" y="${H - 2}" text-anchor="middle"
+        font-size="8" fill="#1a1814" font-family="DM Sans,sans-serif" font-weight="500">
+        ${['søn','man','tir','ons','tor','fre','lør'][t.getDay()]}
+      </text>`;
+    } else {
+      out += `<text x="${x}" y="${H - 2}" text-anchor="middle"
+        font-size="8" fill="#7a7060" font-family="DM Sans,sans-serif">${pad(t.getHours())}</text>`;
+    }
+  }
+
+  // Precip axis label (right side) if there's rain
+  if(maxP > 0.2){
+    out += `<text x="${W - padR}" y="${padT + chartH * 0.6}" text-anchor="end"
+      font-size="7" fill="#4a6fa5" opacity="0.8"
+      font-family="DM Sans,sans-serif">${maxP.toFixed(1)}mm</text>`;
+  }
+
+  out += `</svg>`;
+  svg.outerHTML = out;
 }
 
-function sunriseSunsetCalc(date, lat, lon){
-  const rad = Math.PI/180;
-  const doy = daysInYear(date);
-  const B = 360/365 * (doy-81) * rad;
-  const eot = 9.87*Math.sin(2*B) - 7.53*Math.cos(B) - 1.5*Math.sin(B);
-  const lstm = 15 * Math.round(lon/15);
-  const tc = 4*(lon-lstm) + eot;
-  const decl = 23.45 * Math.sin(rad*360/365*(doy-81)) * rad;
-  const latR = lat * rad;
-  const cosHA = -Math.tan(latR)*Math.tan(decl);
-  if(cosHA < -1) return { rise: new Date(date.setHours(0,1,0)), set: new Date(date.setHours(23,59,0)) };
-  if(cosHA >  1) return { rise: new Date(date.setHours(12,0,0)), set: new Date(date.setHours(12,0,0)) };
-  const ha   = Math.acos(cosHA) / rad;
-  const noon = 12 - tc/60;
-  const riseH = noon - ha/15, setH = noon + ha/15;
-  const riseDate = new Date(date); riseDate.setHours(Math.floor(riseH), Math.round((riseH%1)*60), 0);
-  const setDate  = new Date(date); setDate.setHours(Math.floor(setH),  Math.round((setH%1)*60),  0);
-  return { rise: riseDate, set: setDate };
+// ── MET.NO SUNRISE API ──
+function tzOffset(){
+  // Norway: UTC+1 (winter) or UTC+2 (summer/DST)
+  // DST: last Sunday March → last Sunday October
+  const now = new Date();
+  const jan = new Date(now.getFullYear(), 0, 1);
+  const jul = new Date(now.getFullYear(), 6, 1);
+  const stdOffset = Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+  const isDST = now.getTimezoneOffset() < stdOffset;
+  return isDST ? '+02:00' : '+01:00';
+}
+
+function dateStr(d){
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+async function fetchSunriseMet(date){
+  const offset = tzOffset();
+  const url = `https://api.met.no/weatherapi/sunrise/3.0/sun`
+    + `?lat=${LAT}&lon=${LON}&date=${dateStr(date)}&offset=${offset}`;
+  const r = await fetch(url);
+  const data = await r.json();
+  const props = data.properties;
+  return {
+    rise: props.sunrise?.time ? new Date(props.sunrise.time) : null,
+    set:  props.sunset?.time  ? new Date(props.sunset.time)  : null,
+  };
+}
+
+async function fetchSunTimesCalc(){
+  try {
+    const now = new Date();
+    const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+    const [today, yest] = await Promise.all([
+      fetchSunriseMet(now),
+      fetchSunriseMet(yesterday),
+    ]);
+    if(!today.rise || !today.set) return;
+
+    const todayLen = today.set - today.rise;
+    const yestLen  = yest.set && yest.rise ? yest.set - yest.rise : todayLen;
+    const diffMin  = Math.round((todayLen - yestLen) / 60000);
+    const sign     = diffMin >= 0 ? '+' : '';
+
+    document.getElementById('sunrise-time').textContent  = fmtTime(today.rise);
+    document.getElementById('sunset-time').textContent   = fmtTime(today.set);
+    document.getElementById('daylight-diff').textContent = `${sign}${diffMin} min`;
+    drawSun(document.getElementById('orb-wrap'), now >= today.rise && now <= today.set);
+  } catch(e){
+    console.warn('Sunrise API feil:', e);
+  }
 }
 
 function fmtTime(d){ return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
