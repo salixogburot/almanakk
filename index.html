@@ -731,112 +731,107 @@ function weatherIcon(code, size=56){
   return svg(cloud(S*0.5, S*0.5, S*0.2));
 }
 
-// ── YR.NO WEATHER ──
+// ── OPEN-METEO WEATHER ──
+// WMO weather code → {label, iconCode}
+function wmoInfo(code){
+  if(code===0)                    return {label:'Klarvær',       icon:1};
+  if(code===1)                    return {label:'Mest klart',    icon:1};
+  if(code===2)                    return {label:'Delvis skyet',  icon:2};
+  if(code===3)                    return {label:'Overskyet',     icon:3};
+  if(code>=45&&code<=48)          return {label:'Tåke',          icon:15};
+  if(code>=51&&code<=55)          return {label:'Yr',            icon:46};
+  if(code>=56&&code<=57)          return {label:'Underkjølt yr', icon:46};
+  if(code>=61&&code<=63)          return {label:'Regn',          icon:41};
+  if(code===64||code===65)        return {label:'Kraftig regn',  icon:45};
+  if(code>=66&&code<=67)          return {label:'Underkjølt regn',icon:41};
+  if(code>=71&&code<=73)          return {label:'Snø',           icon:70};
+  if(code===74||code===75)        return {label:'Kraftig snø',   icon:73};
+  if(code===77)                   return {label:'Snøkorn',       icon:70};
+  if(code>=80&&code<=82)          return {label:'Regnbyger',     icon:41};
+  if(code>=83&&code<=84)          return {label:'Sludd',         icon:46};
+  if(code>=85&&code<=86)          return {label:'Snøbyger',      icon:70};
+  if(code>=95&&code<=99)          return {label:'Torden',        icon:6};
+  return {label:'', icon:3};
+}
+
 async function fetchWeather(){
   try {
-    const r = await fetch(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${LAT}&lon=${LON}`,
-      { headers: { 'User-Agent': 'almanakk/1.0 github.com/salixogburot/almanakk' } });
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}`
+      + `&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m`
+      + `&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset`
+      + `&timezone=Europe%2FOslo&forecast_days=5`;
+
+    const r = await fetch(url);
     const data = await r.json();
-    const series = data.properties.timeseries;
-    const now = series[0];
-    const instant = now.data.instant.details;
-    const next1h = now.data.next_1_hours || now.data.next_6_hours || {};
+    const cur = data.current;
+    const daily = data.daily;
 
-    const temp = Math.round(instant.air_temperature);
-    const feels = Math.round(instant.air_temperature - Math.max(0,(13.12 + 0.6215*instant.air_temperature - 11.37*Math.pow(instant.wind_speed,0.16) + 0.3965*instant.air_temperature*Math.pow(instant.wind_speed,0.16))-instant.air_temperature));
-    document.getElementById('temp-now').textContent = temp;
-    document.getElementById('feels-like').textContent = feels;
+    // Current temp
+    document.getElementById('temp-now').textContent = Math.round(cur.temperature_2m);
+    document.getElementById('feels-like').textContent = Math.round(cur.apparent_temperature);
 
-    if(next1h.summary){
-      const code = next1h.summary.symbol_code;
-      document.getElementById('main-weather-icon').outerHTML = weatherIcon(getSymbolCode(code), 56);
-      document.getElementById('weather-desc').textContent = describeWeather(code);
-    }
+    // Weather description + icon
+    const info = wmoInfo(cur.weather_code);
+    document.getElementById('weather-desc').textContent = info.label;
+    const iconEl = document.getElementById('main-weather-icon');
+    if(iconEl) iconEl.outerHTML = weatherIcon(info.icon, 56);
 
-    // Sunrise/sunset via locationforecast - use hardcoded Oslo times for simplicity, replaced by sun calc
-    fetchSunTimes();
+    // Sunrise/sunset from API (accurate, already in local time)
+    const rise = new Date(daily.sunrise[0]);
+    const set  = new Date(daily.sunset[0]);
+    const riseYest = new Date(daily.sunrise[0]); // fallback – use today-1 calc for diff
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+    const {rise: ry, set: sy} = sunriseSunsetCalc(yesterday, LAT, LON);
+    const todayLen = set - rise;
+    const yestLen  = sy - ry;
+    const diffMin  = Math.round((todayLen - yestLen) / 60000);
+    const sign     = diffMin >= 0 ? '+' : '';
 
-    // Forecast: next 4 days at noon
-    const days = [];
-    const seen = new Set();
-    for(const s of series){
-      const t = new Date(s.time);
-      const key = `${t.getDate()}-${t.getMonth()}`;
-      const h = t.getHours();
-      if(h===12 && !seen.has(key) && days.length < 4){
-        seen.add(key);
-        const d6 = s.data.next_6_hours || s.data.next_1_hours || {};
-        days.push({
-          name: DAYS_S[t.getDay()],
-          code: d6.summary ? d6.summary.symbol_code : null,
-          max: Math.round(d6.details ? d6.details.air_temperature_max || s.data.instant.details.air_temperature : s.data.instant.details.air_temperature),
-          min: Math.round(d6.details ? d6.details.air_temperature_min || s.data.instant.details.air_temperature : s.data.instant.details.air_temperature),
-        });
-      }
-    }
+    document.getElementById('sunrise-time').textContent = fmtTime(rise);
+    document.getElementById('sunset-time').textContent  = fmtTime(set);
+    document.getElementById('daylight-diff').textContent = `${sign}${diffMin} min`;
 
+    const now = new Date();
+    const isDay = now >= rise && now <= set;
+    drawSun(document.getElementById('orb-wrap'), isDay);
+
+    // 4-day forecast (skip today = index 0)
     const fc = document.getElementById('forecast-row');
-    fc.innerHTML = days.map(d => `
-      <div class="forecast-day">
-        <span class="fc-name">${d.name}</span>
-        ${weatherIcon(getSymbolCode(d.code), 28)}
-        <span class="fc-temp">${d.max}° <span class="lo">${d.min}°</span></span>
-      </div>`).join('');
+    fc.innerHTML = daily.time.slice(1,5).map((dateStr, i) => {
+      const d = new Date(dateStr);
+      const fi = wmoInfo(daily.weather_code[i+1]);
+      const max = Math.round(daily.temperature_2m_max[i+1]);
+      const min = Math.round(daily.temperature_2m_min[i+1]);
+      return `<div class="forecast-day">
+        <span class="fc-name">${DAYS_S[d.getDay()]}</span>
+        ${weatherIcon(fi.icon, 28)}
+        <span class="fc-temp">${max}° <span class="lo">${min}°</span></span>
+      </div>`;
+    }).join('');
 
   } catch(e){
+    console.error('Weather error:', e);
     document.getElementById('weather-desc').textContent = 'Ingen vær';
+    // Still draw sun orb using formula
+    fetchSunTimesCalc();
   }
 }
 
-function getSymbolCode(sym){
-  if(!sym) return null;
-  const map = {
-    clearsky: 1, fair: 2, partlycloudy: 2, cloudy: 3,
-    lightrain: 46, rain: 41, heavyrain: 45,
-    lightsnow: 70, snow: 71, heavysnow: 73,
-    fog: 15, thunder: 6
-  };
-  for(const k of Object.keys(map)){
-    if(sym.includes(k)) return map[k];
-  }
-  return 3;
-}
-
-function describeWeather(code){
-  if(!code) return '';
-  if(code.includes('clearsky')) return 'Klarvær';
-  if(code.includes('fair')) return 'Pent vær';
-  if(code.includes('partlycloudy')) return 'Delvis skyet';
-  if(code.includes('cloudy')) return 'Overskyet';
-  if(code.includes('lightrain')) return 'Lett regn';
-  if(code.includes('rain')) return 'Regn';
-  if(code.includes('snow')) return 'Snø';
-  if(code.includes('fog')) return 'Tåke';
-  if(code.includes('thunder')) return 'Torden';
-  return code.replace(/_/g,' ');
-}
-
-// ── SUNRISE/SUNSET (formula) ──
-function fetchSunTimes(){
+// Fallback: calculate sunrise/sunset mathematically
+function fetchSunTimesCalc(){
   const now = new Date();
-  const {rise, set} = sunriseSunset(now, LAT, LON);
+  const {rise, set} = sunriseSunsetCalc(now, LAT, LON);
   const yesterday = new Date(now); yesterday.setDate(yesterday.getDate()-1);
-  const {rise: yr2, set: ys2} = sunriseSunset(yesterday, LAT, LON);
-
-  const todayLen = set-rise;
-  const yestLen = (sunriseSunset(yesterday,LAT,LON).set - sunriseSunset(yesterday,LAT,LON).rise);
-  const diffMin = Math.round((todayLen - yestLen)/60000);
+  const {rise: ry, set: sy} = sunriseSunsetCalc(yesterday, LAT, LON);
+  const diffMin = Math.round(((set-rise)-(sy-ry))/60000);
   const sign = diffMin >= 0 ? '+' : '';
-
   document.getElementById('sunrise-time').textContent = fmtTime(rise);
-  document.getElementById('sunset-time').textContent = fmtTime(set);
+  document.getElementById('sunset-time').textContent  = fmtTime(set);
   document.getElementById('daylight-diff').textContent = `${sign}${diffMin} min`;
-
-  const isDay = now >= rise && now <= set;
-  drawSun(document.getElementById('orb-wrap'), isDay);
+  drawSun(document.getElementById('orb-wrap'), now >= rise && now <= set);
 }
 
-function sunriseSunset(date, lat, lon){
+function sunriseSunsetCalc(date, lat, lon){
   const rad = Math.PI/180;
   const doy = daysInYear(date);
   const B = 360/365 * (doy-81) * rad;
@@ -845,12 +840,14 @@ function sunriseSunset(date, lat, lon){
   const tc = 4*(lon-lstm) + eot;
   const decl = 23.45 * Math.sin(rad*360/365*(doy-81)) * rad;
   const latR = lat * rad;
-  const ha = Math.acos(-Math.tan(latR)*Math.tan(decl)) / rad;
+  const cosHA = -Math.tan(latR)*Math.tan(decl);
+  if(cosHA < -1) return { rise: new Date(date.setHours(0,1,0)), set: new Date(date.setHours(23,59,0)) };
+  if(cosHA >  1) return { rise: new Date(date.setHours(12,0,0)), set: new Date(date.setHours(12,0,0)) };
+  const ha   = Math.acos(cosHA) / rad;
   const noon = 12 - tc/60;
-  const riseH = noon - ha/15;
-  const setH  = noon + ha/15;
+  const riseH = noon - ha/15, setH = noon + ha/15;
   const riseDate = new Date(date); riseDate.setHours(Math.floor(riseH), Math.round((riseH%1)*60), 0);
-  const setDate  = new Date(date); setDate.setHours(Math.floor(setH), Math.round((setH%1)*60), 0);
+  const setDate  = new Date(date); setDate.setHours(Math.floor(setH),  Math.round((setH%1)*60),  0);
   return { rise: riseDate, set: setDate };
 }
 
@@ -962,7 +959,7 @@ function init(){
   document.getElementById('updated').textContent =
     'oppdatert ' + fmtTime(now);
 
-  // Async
+  // Async – fetchWeather also handles sunrise/sunset
   fetchWeather();
   fetchYellowstone();
   fetchBirthdays(key);
