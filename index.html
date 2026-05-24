@@ -34,7 +34,7 @@
     width: 800px;
     height: 480px;
     display: grid;
-    grid-template-columns: 200px 1fr 160px;
+    grid-template-columns: 190px 1fr 185px;
     grid-template-rows: 1fr auto;
     gap: 0;
     position: relative;
@@ -284,42 +284,42 @@
     margin-bottom: 4px;
   }
 
-  /* Moon */
+  /* Moon – compact horizontal */
   .moon-block {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
   }
 
   .moon-name {
     font-size: 11px;
     color: var(--muted);
-    text-align: center;
     font-style: italic;
+    line-height: 1.3;
   }
 
-  /* Countdowns */
+  /* Countdowns – compact horizontal pairs */
   .countdown-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 3px;
   }
 
   .countdown-item {
     display: flex;
-    flex-direction: column;
-    gap: 1px;
+    align-items: baseline;
+    gap: 4px;
   }
 
   .cd-label {
     font-size: 10px;
     color: var(--muted);
+    flex: 1;
   }
 
   .cd-value {
     font-family: 'Playfair Display', serif;
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 700;
     color: var(--ink);
     line-height: 1.1;
@@ -327,17 +327,17 @@
 
   .cd-unit {
     font-family: 'DM Sans', sans-serif;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 300;
     color: var(--muted);
   }
 
-  /* Yellowstone */
+  /* Yellowstone – single line */
   .yellowstone {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 7px 8px;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 8px;
     border-radius: 6px;
     background: rgba(192,57,43,0.06);
     border: 1px solid rgba(192,57,43,0.15);
@@ -347,12 +347,15 @@
     font-size: 11px;
     font-weight: 500;
     color: var(--ink);
+    white-space: nowrap;
   }
 
   .ys-detail {
     font-size: 10px;
     color: var(--muted);
-    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .ys-dot {
@@ -366,6 +369,56 @@
   }
 
   .ys-dot.active { background: var(--red); }
+
+  /* Transit */
+  .transit-block {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .transit-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .transit-line {
+    background: #e8263d;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .transit-min {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1;
+  }
+
+  .transit-min-unit {
+    font-size: 9px;
+    color: var(--muted);
+  }
+
+  .transit-realtime {
+    font-size: 9px;
+    color: var(--green);
+    margin-left: auto;
+  }
+
+  .transit-realtime.delayed {
+    color: var(--red);
+  }
 
   /* ── BOTTOM BAR ── */
   .bottom-bar {
@@ -530,26 +583,30 @@
     </div>
   </div>
 
-  <!-- RIGHT: moon + countdowns + Yellowstone -->
+  <!-- RIGHT: moon + countdowns + Yellowstone + transit -->
   <div class="col-right">
 
     <div class="moon-block">
-      <div class="section-label">Månefase</div>
-      <svg id="moon-svg" class="moon-svg" viewBox="0 0 80 80"></svg>
-      <div class="moon-name" id="moon-name">···</div>
+      <svg id="moon-svg" class="moon-svg" viewBox="0 0 80 80" width="36" height="36"></svg>
+      <div>
+        <div class="section-label" style="margin-bottom:1px">Månefase</div>
+        <div class="moon-name" id="moon-name">···</div>
+      </div>
     </div>
 
     <div>
       <div class="section-label">Nedtelling</div>
-      <div class="countdown-list" id="countdown-list">
-        <!-- filled by JS -->
-      </div>
+      <div class="countdown-list" id="countdown-list"></div>
     </div>
 
     <div class="yellowstone" id="yellowstone-box">
-      <div class="section-label" style="margin-bottom:2px">Yellowstone</div>
-      <div class="ys-status" id="ys-status"><span class="ys-dot"></span>Sjekker…</div>
+      <div class="ys-status" id="ys-status"><span class="ys-dot"></span>···</div>
       <div class="ys-detail" id="ys-detail"></div>
+    </div>
+
+    <div class="transit-block">
+      <div class="section-label">Godlia → sentrum</div>
+      <div id="transit-list">···</div>
     </div>
 
   </div>
@@ -929,7 +986,67 @@ function drawWeatherChart(hourly){
   svg.outerHTML = out;
 }
 
-// ── MET.NO SUNRISE API ──
+// ── ENTUR TRANSIT ──
+async function fetchTransit(){
+  const STOP_ID = 'NSR:StopPlace:6364'; // Godlia T-bane
+  const query = `{
+    stopPlace(id:"${STOP_ID}") {
+      estimatedCalls(numberOfDepartures:6, omitNonBoarding:true) {
+        expectedDepartureTime
+        aimedDepartureTime
+        destinationDisplay { frontText }
+        serviceJourney { line { publicCode } }
+      }
+    }
+  }`;
+  try {
+    const r = await fetch('https://api.entur.io/journey-planner/v3/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'ET-Client-Name': 'salixogburot-almanakk'
+      },
+      body: JSON.stringify({ query })
+    });
+    const data = await r.json();
+    const calls = data?.data?.stopPlace?.estimatedCalls || [];
+    const now = new Date();
+
+    // Filter: only departures towards sentrum
+    // Godlia linje 3: retning sentrum = ikke Mortensrud/Bergkrystallen/Ellingsrudåsen
+    const OUTBOUND = ['Mortensrud','Bergkrystallen','Ellingsrudåsen','Hellerud'];
+    const inbound = calls.filter(c => {
+      const dest = c.destinationDisplay?.frontText || '';
+      return !OUTBOUND.some(d => dest.includes(d));
+    });
+
+    const el = document.getElementById('transit-list');
+    if(!inbound.length){
+      el.innerHTML = `<span style="font-size:10px;color:var(--muted);font-style:italic">Ingen avganger</span>`;
+      return;
+    }
+
+    el.innerHTML = inbound.slice(0,4).map(c => {
+      const exp = new Date(c.expectedDepartureTime);
+      const aimed = new Date(c.aimedDepartureTime);
+      const mins = Math.max(0, Math.round((exp - now) / 60000));
+      const delay = Math.round((exp - aimed) / 60000);
+      const lineCode = c.serviceJourney?.line?.publicCode || '3';
+      const realtimeClass = delay > 1 ? 'delayed' : '';
+      const realtimeText = delay > 1 ? `+${delay}` : delay < 0 ? `${delay}` : '✓';
+
+      return `<div class="transit-row">
+        <span class="transit-line">${lineCode}</span>
+        <span class="transit-min">${mins}</span><span class="transit-min-unit"> min</span>
+        <span class="transit-realtime ${realtimeClass}">${realtimeText}</span>
+      </div>`;
+    }).join('');
+
+  } catch(e){
+    document.getElementById('transit-list').innerHTML =
+      `<span style="font-size:10px;color:var(--muted)">–</span>`;
+  }
+}
 function tzOffset(){
   // Norway: UTC+1 (winter) or UTC+2 (summer/DST)
   // DST: last Sunday March → last Sunday October
@@ -1094,10 +1211,12 @@ function init(){
   fetchWeather();
   fetchYellowstone();
   fetchBirthdays(key);
+  fetchTransit();
 }
 
 init();
 setInterval(init, 30*60*1000);
+setInterval(fetchTransit, 2*60*1000); // avganger oppdateres hvert 2. minutt
 </script>
 </body>
 </html>
