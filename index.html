@@ -988,7 +988,7 @@ function drawWeatherChart(hourly){
 
 // ── ENTUR TRANSIT ──
 async function fetchTransit(){
-  const STOP_ID = 'NSR:StopPlace:6364'; // Godlia T-bane
+  const STOP_ID = 'NSR:StopPlace:5968'; // Godlia T-bane
   const query = `{
     stopPlace(id:"${STOP_ID}") {
       estimatedCalls(numberOfDepartures:6, omitNonBoarding:true) {
