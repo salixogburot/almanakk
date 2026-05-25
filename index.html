@@ -989,13 +989,16 @@ function drawWeatherChart(hourly){
 // ── ENTUR TRANSIT ──
 async function fetchTransit(){
   const STOP_ID = 'NSR:StopPlace:5968'; // Godlia T-bane
+  // Linje 3 fra Godlia: Kolsås og Stortinget → sentrum, Mortensrud → bort
   const query = `{
     stopPlace(id:"${STOP_ID}") {
-      estimatedCalls(numberOfDepartures:6, omitNonBoarding:true) {
-        expectedDepartureTime
-        aimedDepartureTime
-        destinationDisplay { frontText }
-        serviceJourney { line { publicCode } }
+      quays {
+        estimatedCalls(numberOfDepartures:6, omitNonBoarding:true) {
+          expectedDepartureTime
+          aimedDepartureTime
+          destinationDisplay { frontText }
+          serviceJourney { line { publicCode } }
+        }
       }
     }
   }`;
@@ -1009,32 +1012,32 @@ async function fetchTransit(){
       body: JSON.stringify({ query })
     });
     const data = await r.json();
-    const calls = data?.data?.stopPlace?.estimatedCalls || [];
+    const quays = data?.data?.stopPlace?.quays || [];
     const now = new Date();
 
-    // Filter: only departures towards sentrum
-    // Godlia linje 3: retning sentrum = ikke Mortensrud/Bergkrystallen/Ellingsrudåsen
-    const OUTBOUND = ['Mortensrud','Bergkrystallen','Ellingsrudåsen','Hellerud'];
-    const inbound = calls.filter(c => {
-      const dest = c.destinationDisplay?.frontText || '';
-      return !OUTBOUND.some(d => dest.includes(d));
-    });
+    let calls = [];
+    for(const quay of quays){
+      for(const c of (quay.estimatedCalls || [])){
+        const dest = c.destinationDisplay?.frontText || '';
+        if(!dest.includes('Mortensrud')) calls.push(c);
+      }
+    }
+    calls.sort((a,b) => new Date(a.expectedDepartureTime) - new Date(b.expectedDepartureTime));
 
     const el = document.getElementById('transit-list');
-    if(!inbound.length){
+    if(!calls.length){
       el.innerHTML = `<span style="font-size:10px;color:var(--muted);font-style:italic">Ingen avganger</span>`;
       return;
     }
 
-    el.innerHTML = inbound.slice(0,4).map(c => {
-      const exp = new Date(c.expectedDepartureTime);
+    el.innerHTML = calls.slice(0,4).map(c => {
+      const exp   = new Date(c.expectedDepartureTime);
       const aimed = new Date(c.aimedDepartureTime);
-      const mins = Math.max(0, Math.round((exp - now) / 60000));
+      const mins  = Math.max(0, Math.round((exp - now) / 60000));
       const delay = Math.round((exp - aimed) / 60000);
       const lineCode = c.serviceJourney?.line?.publicCode || '3';
       const realtimeClass = delay > 1 ? 'delayed' : '';
-      const realtimeText = delay > 1 ? `+${delay}` : delay < 0 ? `${delay}` : '✓';
-
+      const realtimeText  = delay > 1 ? `+${delay}` : '✓';
       return `<div class="transit-row">
         <span class="transit-line">${lineCode}</span>
         <span class="transit-min">${mins}</span><span class="transit-min-unit"> min</span>
@@ -1043,6 +1046,7 @@ async function fetchTransit(){
     }).join('');
 
   } catch(e){
+    console.error('Transit error:', e);
     document.getElementById('transit-list').innerHTML =
       `<span style="font-size:10px;color:var(--muted)">–</span>`;
   }
