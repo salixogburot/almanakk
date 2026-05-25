@@ -1015,6 +1015,7 @@ async function fetchTransit(){
       body: JSON.stringify({ query })
     });
     const data = await r.json();
+    console.log('Entur raw:', JSON.stringify(data?.data?.stopPlace, null, 2));
     const all = data?.data?.stopPlace?.estimatedCalls || [];
     const now = new Date();
 
