@@ -989,16 +989,19 @@ function drawWeatherChart(hourly){
 // ── ENTUR TRANSIT ──
 async function fetchTransit(){
   const STOP_ID = 'NSR:StopPlace:5968'; // Godlia T-bane
-  // Linje 3 fra Godlia: Kolsås og Stortinget → sentrum, Mortensrud → bort
+  // Quay:10948 = plattform mot sentrum (Kolsås/Stortinget)
+  // Quay:10949 = plattform mot Mortensrud
+  const SENTRUM_QUAY = 'NSR:Quay:10948';
+
   const query = `{
     stopPlace(id:"${STOP_ID}") {
-      quays {
-        estimatedCalls(numberOfDepartures:6, omitNonBoarding:true) {
-          expectedDepartureTime
-          aimedDepartureTime
-          destinationDisplay { frontText }
-          serviceJourney { line { publicCode } }
-        }
+      estimatedCalls(timeRange:7200, numberOfDepartures:10, omitNonBoarding:true) {
+        realtime
+        expectedDepartureTime
+        aimedDepartureTime
+        destinationDisplay { frontText }
+        quay { id }
+        serviceJourney { line { publicCode } }
       }
     }
   }`;
@@ -1012,17 +1015,16 @@ async function fetchTransit(){
       body: JSON.stringify({ query })
     });
     const data = await r.json();
-    const quays = data?.data?.stopPlace?.quays || [];
+    const all = data?.data?.stopPlace?.estimatedCalls || [];
     const now = new Date();
 
-    let calls = [];
-    for(const quay of quays){
-      for(const c of (quay.estimatedCalls || [])){
-        const dest = c.destinationDisplay?.frontText || '';
-        if(!dest.includes('Mortensrud')) calls.push(c);
-      }
+    // Filtrer på riktig quay (retning sentrum)
+    // Fallback: filtrer på destinasjon hvis quay-ID ikke matcher
+    let calls = all.filter(c => c.quay?.id === SENTRUM_QUAY);
+    if(!calls.length){
+      // Fallback: ikke Mortensrud
+      calls = all.filter(c => !(c.destinationDisplay?.frontText || '').includes('Mortensrud'));
     }
-    calls.sort((a,b) => new Date(a.expectedDepartureTime) - new Date(b.expectedDepartureTime));
 
     const el = document.getElementById('transit-list');
     if(!calls.length){
@@ -1030,14 +1032,14 @@ async function fetchTransit(){
       return;
     }
 
-    el.innerHTML = calls.slice(0,4).map(c => {
+    el.innerHTML = calls.slice(0, 4).map(c => {
       const exp   = new Date(c.expectedDepartureTime);
       const aimed = new Date(c.aimedDepartureTime);
       const mins  = Math.max(0, Math.round((exp - now) / 60000));
       const delay = Math.round((exp - aimed) / 60000);
       const lineCode = c.serviceJourney?.line?.publicCode || '3';
       const realtimeClass = delay > 1 ? 'delayed' : '';
-      const realtimeText  = delay > 1 ? `+${delay}` : '✓';
+      const realtimeText  = delay > 1 ? `+${delay}` : (c.realtime ? '✓' : '');
       return `<div class="transit-row">
         <span class="transit-line">${lineCode}</span>
         <span class="transit-min">${mins}</span><span class="transit-min-unit"> min</span>
