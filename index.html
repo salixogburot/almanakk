@@ -995,7 +995,7 @@ async function fetchTransit(){
 
   const query = `{
     stopPlace(id:"${STOP_ID}") {
-      estimatedCalls(timeRange:7200, numberOfDepartures:10, omitNonBoarding:true) {
+      estimatedCalls(timeRange:7200, numberOfDepartures:10) {
         realtime
         expectedDepartureTime
         aimedDepartureTime
